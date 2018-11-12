@@ -2,6 +2,8 @@ const path = require('path');
 const webpack = require('webpack');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebPackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
+const HtmlWebpackIncludeAssetsPlugin = require('html-webpack-include-assets-plugin');
 const webpackMerge = require("webpack-merge");
 
 const modeConfig = env => require(`./build-utils/webpack.${env}`)(env);
@@ -27,7 +29,7 @@ module.exports = ({ mode, presets } = { mode: "production", presets: [] }) => {
           exclude: /node_modules/
         },
         {
-          test: /\.(png|jpg|bmp)$/,
+          test: /\.(png|jpg|bmp|json|tmx|tsx)$/,
           use: [{
             loader: 'file-loader',
             options: {
@@ -38,7 +40,7 @@ module.exports = ({ mode, presets } = { mode: "production", presets: [] }) => {
       ]
     },
     resolve: {
-      extensions: ['.tsx', '.ts', '.js']
+      extensions: ['.ts', '.js']
     },
     output: {
       filename: '[name].js',
@@ -52,9 +54,16 @@ module.exports = ({ mode, presets } = { mode: "production", presets: [] }) => {
     },
     plugins: [
       new CleanWebpackPlugin(['dist']),
+      new CopyWebpackPlugin([
+        { from: 'src/map', to: 'map/' },
+        { from: 'src/images', to: 'images' }
+      ]),
       new HtmlWebPackPlugin({
-        title: 'Excalibur Webpack Sample'
-      })
+        title: 'Isle'
+      }),
+      // new HtmlWebpackIncludeAssetsPlugin({
+      //   assets: [ 'map/example.json' ]
+      // })
     ]
   },
   modeConfig(mode)
