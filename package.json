@@ -11,7 +11,8 @@
     "dev": "npm run webpack-dev-server",
     "start": "npm run dev",
     "build:dev": "npm run webpack -- --env.mode development",
-    "build:prod": "npm run webpack -- --env.mode production"
+    "build:prod": "npm run webpack -- --env.mode production",
+    "deploy": "yarn run build:prod && node ./scripts/deploy.js"
   },
   "author": "Excalibur.js Team",
   "license": "BSD-2-Clause",

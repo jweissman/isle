@@ -11,8 +11,10 @@ let Resources = {
 }
 
 Resources.Map.imagePathAccessor = (path, tileset) => {
-    console.log("ACCESS IMAGE PATH", { path })
-    return "/assets/" + path;
+    let actualPath = path.replace(/^(?:\.\.\/)+/, "");
+    console.log("LOAD IMG", { path, actualPath });
+    return actualPath;
+    // return "/assets/" + path;
 }
 
 export { Resources }
