@@ -7,6 +7,9 @@ import { Game } from './game';
 
 import { Isle } from './models';
 
+import { keyToDirection, Direction, mode } from './util';
+import { TileMap } from 'excalibur';
+
 // const island = new Isle();
 
 const game = new Game(800, 600);
@@ -16,88 +19,31 @@ game.add('main-menu', mainMenu);
 
 const levelOne = new LevelOne();
 
+const sheet = new ex.SpriteSheet(Resources.Spritemap, 8, 8, 31, 31);
+
+const startX = 6, startY = 6;
+const player = new Player(startX * 32, startY * 32);
 
 
-// const logo = new Logo(game, 'Isle');
-// levelOne.add(logo);
+player.addDrawing(sheet.getSprite(7));
 
+game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
+  let { key } = evt;
+  let direction = keyToDirection(key);
+  player.tryMove(direction);
+})
 
-const sheet = new ex.SpriteSheet(Resources.Spritemap, 8, 8, 32, 32);
-
-const player = new Player(game);
-
-//player.addDrawing(sheet.getSprite(0));
-
-
-//player.addDrawing(Resources.Sword);
-game.input.pointers.primary.on('move', (evt: ex.Input.PointerEvent) => {
-  // player.pos.x = evt.worldPos.x;
-
-  const dy = 40;
-  if (player.pos.y > evt.worldPos.y) {
-    player.vel.y -= dy;
-  }
-  if (player.pos.y < evt.worldPos.y) {
-    player.vel.y += dy;
-  }
-
-  player.vel.y = ex.Util.clamp(player.vel.y, -250, 250);
-});
+game.input.keyboard.on('hold', (evt: ex.Input.KeyEvent) => {
+  let { key } = evt;
+  let direction : Direction = keyToDirection(key);
+  player.tryMove(direction);
+})
 
 levelOne.add(player);
 
-const enemy = new Enemy({initialVelocity: [500,400]});
-enemy.addDrawing(sheet.getSprite(1)); //Resources.Sword);
-enemy.on('precollision', (ev) => {
-  let intersection = ev.intersection.normalize();
-  if (Math.abs(intersection.x) > Math.abs(intersection.y)) {
-    enemy.vel.x *= -1;
-  } else {
-    enemy.vel.y *= -1;
-
-    // give a percentage from player?
-    enemy.vel.y += player.vel.y * 0.2;
-  }
-
-  const boost = 1.00125;
-  enemy.vel.x = enemy.vel.x * boost;
-  enemy.vel.y = enemy.vel.y * boost;
-});
-
-enemy.on('postupdate', () => {
-  //console.log("pos", enemy.pos);
-  if (enemy.pos) {
-    if (enemy.pos.x < enemy.getWidth() / 2) {
-      enemy.vel.x *= -1;
-    }
-
-    if (enemy.pos.x + enemy.getWidth() / 2 > game.drawWidth) {
-      enemy.vel.x *= -1;
-    }
-
-    if (enemy.pos.y < enemy.getHeight() / 2) {
-      enemy.vel.y *= -1;
-    }
-
-    if (enemy.pos.y + enemy.getWidth() / 2 > game.drawHeight) {
-      enemy.vel.y *= -1;
-    }
-  }
-})
-
-// enemy.draw = (ctx) => {
-//   ctx.fillStyle = this.color.toString();
-// }
-
-levelOne.add(enemy);
+levelOne.camera.strategy.lockToActor(player);
 
 game.add('wander', levelOne);
-
-
-// enemy.vel.setTo(200,10);
-
-
-
 
 let loader = new ex.Loader();
 for (let key in Resources) {
@@ -105,19 +51,49 @@ for (let key in Resources) {
 }
 
 game.start(loader).then(() => {
-  game.goToScene('main-menu');
+  game.goToScene('wander');
 
-  Resources.Map.data.tilesets.forEach((ts) => {
-    console.log(ts.image, ts.imageTexture.isLoaded());
+  let _mapRes = Resources.Map;
+  let terrainMeta = {};
+  let spriteTerrainById = {};
+
+  _mapRes.data.tilesets.forEach((ts) => {
+    if (ts.terrains) {
+      ts.terrains.forEach(terrain => {
+        terrainMeta[terrain.tile] = terrain.properties.reduce((acc, curr) => {
+          let { name, value } = curr;
+          return (<any>Object).assign(acc, { [name]: value })
+        }, {});
+      });
+
+      spriteTerrainById = ts.tiles.reduce((acc, curr) => {
+        let { terrain, id } = curr;
+        let terrainTile = {
+          solid: terrain.some(tile => terrainMeta[tile].solid)
+        };
+        return (<any>Object).assign(acc, { [id]: terrainTile });
+      }, {});
+    }
+
   });
 
-  let map = Resources.Map.getTileMap();
-  console.log("THE MAP", { map });
-  levelOne.add(Resources.Map.getTileMap());
 
-  // game.addTimer(
-  //   new ex.Timer(logo.strobe, 20, true)
-  // );
+  let tileMap: ex.TileMap = Resources.Map.getTileMap();
+
+  tileMap.data.forEach((cell: ex.Cell) => {
+    let tile = spriteTerrainById[cell.sprites[0].spriteId];
+    cell = Object.assign(cell, tile);
+  });
+
+  levelOne.add(tileMap);
+  player.wireMap(tileMap);
+
+  // debugger;
+
+  // levelOne.camera.zoom(1, 1000);
+  // tileMap.collides(player)
+  
+
 });
 
 

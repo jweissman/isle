@@ -4,10 +4,12 @@ import TiledResource from '@excaliburjs/excalibur-tiled';
 const sword = require('./images/sword.png');
 const spritemap = require('./images/spritemap.png')
 
+let mapName = 'solidity';
+
 let Resources = {
     Sword: new ex.Texture(sword),
     Spritemap: new ex.Texture(spritemap), // SpriteSheet(spritemap)
-    Map: new TiledResource("./map/example.json")
+    Map: new TiledResource(`map/${mapName}.json`)
 }
 
 Resources.Map.imagePathAccessor = (path, tileset) => {
