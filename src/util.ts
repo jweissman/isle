@@ -76,11 +76,21 @@ const addScalarToVec = (vec: ex.Vector, direction: Direction, step: number) => {
   }
 }
 
+const dirFromVec = (vec: ex.Vector): Direction => {
+  let {x,y} = vec;
+  if (Math.abs(x) > Math.abs(y)) {
+    return x > 0 ? 'right' : 'left';
+  } else {
+    return y > 0 ? 'down' : 'up';
+  }
+}
+
 export {
   clamp,
   Direction,
   keyToDirection,
   addScalarToVec,
+  dirFromVec,
   oppositeWay,
   mode
 };
