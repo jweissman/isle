@@ -52,5 +52,7 @@ export class Player extends ex.Actor {
     if (direction === 'right') { this.vel.x = step; }
     if (direction === 'up')    { this.vel.y = -step; }
     if (direction === 'down')  { this.vel.y = step; }
+    this.setZIndex(this.y);
   }
+
 }

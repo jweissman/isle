@@ -14,7 +14,7 @@ import { World } from './world';
 const config = {
   debugCells: false,
   debugBoundingBoxes: true,
-  zoom: 3.0 //.0
+  zoom: 4.0 //.0
 }
 
 
@@ -38,13 +38,14 @@ game.add('main-menu', mainMenu);
 
 const levelOne = new LevelOne();
 
-const sheet = new ex.SpriteSheet(Resources.Spritemap, 8, 8, 32, 32);
+const spritemap = new ex.SpriteSheet(Resources.Spritemap, 8, 8, 32, 32);
+const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
 
 const startX = 4, startY = 4;
 const player = new Player(startX * 32, startY * 32);
 
 
-player.addDrawing(sheet.getSprite(7));
+player.addDrawing(basicSprites.getSprite(4)); //spritemap.getSprite(7));
 
 game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
   let { key } = evt;

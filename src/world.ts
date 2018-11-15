@@ -96,16 +96,33 @@ class World {
                     if (collision) {
                         let block = new ex.Actor(cell.x, cell.y, 32, 32);
                         block.collisionType = ex.CollisionType.Fixed;
-                        block.body.useCircleCollision(
-                            collision.height / 2, // / 1.2,
-                            new ex.Vector(collision.x, collision.y)
-                        );
+
+                        if (collision.ellipse) {
+                            block.body.useCircleCollision(
+                                collision.height / 2, // / 1.2,
+                                new ex.Vector(collision.x, collision.y)
+                            );
+                        } else if (collision.polygon) {
+                            //console.log("poly", { polygon: collision.polygon });
+                            //debugger;
+                            let vecs : ex.Vector[] = collision.polygon.map(
+                                ({ x, y }) => new ex.Vector(collision.x + x, collision.y + y)
+                            );
+
+                            block.body.usePolygonCollision(
+                                vecs
+                            )
+                        } else {
+                            console.warn("implement collider:", { collision })
+                            //debugger;
+                        }
                         if (this.debugBoxes) { // config.debugBoundingBoxes) {
                             console.log({ collision, block });
                             block.draw = (ctx) => {
                                 block.collisionArea.debugDraw(ctx, ex.Color.LightGray);
                             }
                         }
+                        //console.log({collision});
                         this.blockingActors.push(block);
                     }
                     // add it to the level...
