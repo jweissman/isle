@@ -13,9 +13,12 @@ import { World } from './world';
 
 const config = {
   debugCells: false,
-  debugBoundingBoxes: true,
-  zoom: 4.0 //.0
+  debugBoundingBoxes: false,
+  zoom: 4
 }
+
+ex.Physics.collisionPasses = 20;
+// ex.Physics.useRigidBodyPhysics();
 
 
 // Islands are either from before or for after humankind. (gd)

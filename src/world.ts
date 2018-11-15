@@ -89,24 +89,24 @@ class World {
             if (cell.sprites[0]) {
                 let tile = spriteTerrainById[cell.sprites[0].spriteId];
                 cell = Object.assign(cell, tile);
+                // cell.height = cell.y;
 
                 // we have another sprite, maybe a thing to build a box for?
                 if (cell.sprites[1]) {
                     const collision = spriteCollisionById[cell.sprites[1].spriteId];
                     if (collision) {
-                        let block = new ex.Actor(cell.x, cell.y, 32, 32);
+                        let block = new ex.Actor(cell.x + collision.x, cell.y + collision.y, 32, 32);
                         block.collisionType = ex.CollisionType.Fixed;
-
                         if (collision.ellipse) {
                             block.body.useCircleCollision(
                                 collision.height / 2, // / 1.2,
-                                new ex.Vector(collision.x, collision.y)
+                                new ex.Vector(6,0) // collision.x, collision.y) // collision.x, collision.y)
                             );
                         } else if (collision.polygon) {
                             //console.log("poly", { polygon: collision.polygon });
                             //debugger;
                             let vecs : ex.Vector[] = collision.polygon.map(
-                                ({ x, y }) => new ex.Vector(collision.x + x, collision.y + y)
+                                ({ x, y }) => new ex.Vector(x,y) // collision.x + x, collision.y + y)
                             );
 
                             block.body.usePolygonCollision(
