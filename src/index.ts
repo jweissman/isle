@@ -10,16 +10,17 @@ import { Isle } from './models';
 import { keyToDirection, Direction, mode } from './util';
 import { TileMap } from 'excalibur';
 import { World } from './world';
+import { GameConfig } from './game_config';
 
-const config = {
+const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 4
+  zoom: 2,
+  playerStart: { x: 30, y: 30 }
 }
 
-ex.Physics.collisionPasses = 20;
+ex.Physics.collisionPasses = 8;
 // ex.Physics.useRigidBodyPhysics();
-
 
 // Islands are either from before or for after humankind. (gd)
 
@@ -44,17 +45,34 @@ const levelOne = new LevelOne();
 const spritemap = new ex.SpriteSheet(Resources.Spritemap, 8, 8, 32, 32);
 const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
 
-const startX = 4, startY = 4;
-const player = new Player(startX * 32, startY * 32);
+const tinyAlexSprite = basicSprites.getSprite(4); //spritemap.getSprite(7));
+const alexSprite = Resources.Alex.asSprite(); //new ex.Sprite(Resources.Alex.);
 
+const startX = config.playerStart.x, startY = config.playerStart.y;
+const player = new Player(startX * 32, startY * 32, config);
 
-player.addDrawing(basicSprites.getSprite(4)); //spritemap.getSprite(7));
+player.addDrawing(alexSprite);
+
+const output = new ex.Label('(welcome to isle)', 500, 500, 'Arial');
+//output.
+const brand = new ex.Label('(welcome to isle)', 500, 500, 'Arial');
+levelOne.add(output);
+levelOne.add(brand);
 
 game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
   let { key } = evt;
   if (key == ex.Input.Keys.E) {
     console.log("INTERACT?!");
-    player.interact(); //tileMap);
+    let interaction = player.interact(); //tileMap);
+    if (interaction) {
+      output.x = levelOne.camera.x;
+      output.y = levelOne.camera.y;
+      output.text = interaction;
+      output.color = ex.Color.White;
+      output.fontSize = 48;
+
+    }
+
   } else {
     let direction = keyToDirection(key);
     if (direction) {
@@ -72,11 +90,12 @@ game.input.keyboard.on('hold', (evt: ex.Input.KeyEvent) => {
 })
 
 game.input.keyboard.on('release', (evt: ex.Input.KeyEvent) => {
-  console.log("RELEASE", { evt });
+  // console.log("RELEASE", { evt });
   let { key } = evt;
   let direction : Direction = keyToDirection(key);
   if (direction) {
     player.halt(); //direction);
+    player.interacting = false;
   }
 });
 
@@ -92,12 +111,8 @@ levelOne.camera.zoom(config.zoom);
 
 game.add('wander', levelOne);
 
-let loader = new ex.Loader();
-for (let key in Resources) {
-  loader.addResource(Resources[key]);
-}
 
-game.start(loader).then(() => {
+game.start().then(() => {
   game.goToScene('wander');
   let world = new World(Resources.Map, config.debugBoundingBoxes);
 

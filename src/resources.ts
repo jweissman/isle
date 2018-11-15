@@ -4,6 +4,7 @@ import TiledResource from '@excaliburjs/excalibur-tiled';
 const sword = require('./images/sword.png');
 const spritemap = require('./images/spritemap.png')
 const basicSprites = require('./images/basic-sprites.png')
+const alex = require('./images/alex.png')
 
 let mapName = 'solidity';
 
@@ -11,6 +12,7 @@ let Resources = {
     Sword: new ex.Texture(sword),
     Spritemap: new ex.Texture(spritemap), // SpriteSheet(spritemap)
     BasicSprites: new ex.Texture(basicSprites),
+    Alex: new ex.Texture(alex),
     Map: new TiledResource(`map/${mapName}.json`)
 }
 
