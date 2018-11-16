@@ -15,12 +15,12 @@ import { GameConfig } from './game_config';
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 2,
-  playerStart: { x: 30, y: 30 }
+  zoom: 4,
+  playerStart: { x: 30, y: 30 },
+  playerSpeed: 6,
 }
 
 ex.Physics.collisionPasses = 8;
-// ex.Physics.useRigidBodyPhysics();
 
 // Islands are either from before or for after humankind. (gd)
 
@@ -44,14 +44,15 @@ const levelOne = new LevelOne();
 
 const spritemap = new ex.SpriteSheet(Resources.Spritemap, 8, 8, 32, 32);
 const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
+const alexSprites = new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64);
 
 const tinyAlexSprite = basicSprites.getSprite(4); //spritemap.getSprite(7));
-const alexSprite = Resources.Alex.asSprite(); //new ex.Sprite(Resources.Alex.);
+//const alexSprite = alexSprites.getSprite(0); //Resources.Alex.asSprite(); //new ex.Sprite(Resources.Alex.);
 
 const startX = config.playerStart.x, startY = config.playerStart.y;
-const player = new Player(startX * 32, startY * 32, config);
+const player = new Player(startX * 32, startY * 32, config, alexSprites);
 
-player.addDrawing(alexSprite);
+//player.addDrawing(alexSprite);
 
 const output = new ex.Label('(welcome to isle)', 500, 500, 'Arial');
 //output.
@@ -62,22 +63,18 @@ levelOne.add(brand);
 game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
   let { key } = evt;
   if (key == ex.Input.Keys.E) {
-    console.log("INTERACT?!");
-    let interaction = player.interact(); //tileMap);
+    let interaction = player.interact();
     if (interaction) {
       output.x = levelOne.camera.x;
       output.y = levelOne.camera.y;
       output.text = interaction;
       output.color = ex.Color.White;
-      output.fontSize = 48;
-
+      output.fontSize = 24;
     }
-
   } else {
+    // assume we're trying to move
     let direction = keyToDirection(key);
-    if (direction) {
-      player.move(direction);
-    }
+    if (direction) { player.move(direction); }
   }
 })
 

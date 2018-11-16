@@ -83,7 +83,7 @@ class World {
                     }
                 }, {});
 
-                // console.log({ spriteCollisionById });
+                console.log({ spriteCollisionById });
 
                 itemKindBySpriteId = ts.tiles.reduce((acc, curr) => {
                     if (curr.properties) {

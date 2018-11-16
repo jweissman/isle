@@ -11,50 +11,64 @@ export class Player extends ex.Actor {
   speed: number
   facing: Direction
   _world: World
-  blocked: { [key: string]: boolean }
+  alex: { [key: string]: ex.Sprite }
 
   constructor(
     public x: number,
     public y: number,
-    protected config: GameConfig
+    protected config: GameConfig,
+    protected spriteSheet: ex.SpriteSheet 
   ) {
     super();
 
     this.setWidth(20);
     this.setHeight(36);
-    this.collisionArea.pos.y = 12; // = this.anchor; //..y = 16;
-    //this.collisionArea.pos.x = 2;
-
-
+    this.collisionArea.pos.y = 12;
 
     this.color = new ex.Color(255, 255, 255);
 
     this.collisionType = ex.CollisionType.Active;
-    this.speed = 15; // cells/sec?
-    this.facing = 'down';
+    this.speed = config.playerSpeed; // cells/sec
+    //this.facing = 'down';
     this.interacting = false;
+
+    this.alex = {
+      'down': spriteSheet.getSprite(0),
+      'up': spriteSheet.getSprite(1),
+      'left': spriteSheet.getSprite(3),
+      'right': spriteSheet.getSprite(2),
+    }
+
+    // set facing + init sprite
+    this.move('down');
+    this.halt();
   }
 
   wireWorld = (world: World) => { this._world = world; }
 
   interact() {
     let pos = this.interactionPos();
-    console.log("attempting to interact at", {pos});
+    // console.log("attempting to interact at", {pos});
     this.interacting = true;
-    let item = this._world.entityAt(pos.x, pos.y);
+    let item = this._world.entityAt(pos.x, pos.y) ||
+      this._world.entityAt(pos.x, pos.y+10) ||
+      this._world.entityAt(pos.x, pos.y-10) ||
+      this._world.entityAt(pos.x-10, pos.y) ||
+      this._world.entityAt(pos.x+10, pos.y);
     if (item) {
       let { name, description } = item.kind;
-      console.log("ENTITY IS", {name, description });
+      // console.log("ENTITY IS", {name, description });
       return description;
     }
-    return '(..)';
+    // return '(..)';
   }
 
   interactionPos(): { x:number, y:number }  {
     let interactionPos = this.getCenter().clone();
     let yOff = this.facing === 'up' ? 10 : 16;
     interactionPos.y += yOff; //this.getHeight();
-    addScalarToVec(interactionPos, this.facing, 18);
+    interactionPos.x -= 2;
+    addScalarToVec(interactionPos, this.facing, 24);
     return interactionPos;
   }
 
@@ -62,25 +76,31 @@ export class Player extends ex.Actor {
     super.draw(ctx, engine);
     if (this.config.debugBoundingBoxes) {
       this.collisionArea.debugDraw(ctx, ex.Color.Chartreuse);
-    }
-    if (this.interacting) {
-      let pos = this.interactionPos(); //getCenter().clone();
-      ctx.fillRect(pos.x, pos.y, 4, 4);
+      if (this.interacting) {
+        let pos = this.interactionPos(); //getCenter().clone();
+        ctx.fillRect(pos.x, pos.y - 10, 4, 4);
+        ctx.fillRect(pos.x, pos.y, 4, 4);
+        ctx.fillRect(pos.x, pos.y + 10, 4, 4);
+        ctx.fillRect(pos.x - 10, pos.y, 4, 4);
+        ctx.fillRect(pos.x + 10, pos.y, 4, 4);
+      }
     }
   }
 
   halt = () => {
-     this.vel = new ex.Vector(0,0);
+    this.vel = new ex.Vector(0, 0);
   }
 
   move = (direction: Direction) => {
     this.facing = direction;
-    const step = this.speed * 16;
+    const step = this.speed * 32;
     this.halt();
     if (direction === 'left')  { this.vel.x = -step; }
     if (direction === 'right') { this.vel.x = step; }
     if (direction === 'up')    { this.vel.y = -step; }
     if (direction === 'down')  { this.vel.y = step; }
+    this.currentDrawing = this.alex[direction];
+    // this.addDrawing(this.alex[direction]);
     // this.setZIndex(this.y);
   }
 

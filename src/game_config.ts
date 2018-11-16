@@ -3,7 +3,8 @@ interface GameConfig {
   debugBoundingBoxes: boolean
   zoom: number,
 
-  playerStart: { x: number, y: number }
+  playerStart: { x: number, y: number },
+  playerSpeed: number,
 }
 
 export { GameConfig };
