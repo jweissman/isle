@@ -22,8 +22,8 @@ export class Player extends ex.Actor {
     super();
 
     this.setWidth(20);
-    this.setHeight(36);
-    this.collisionArea.pos.y = 12;
+    this.setHeight(14);
+    this.collisionArea.pos.y = 28;
 
     this.color = new ex.Color(255, 255, 255);
 
@@ -48,7 +48,6 @@ export class Player extends ex.Actor {
 
   interact() {
     let pos = this.interactionPos();
-    // console.log("attempting to interact at", {pos});
     this.interacting = true;
     let item = this._world.entityAt(pos.x, pos.y) ||
       this._world.entityAt(pos.x, pos.y+10) ||
@@ -56,11 +55,8 @@ export class Player extends ex.Actor {
       this._world.entityAt(pos.x-10, pos.y) ||
       this._world.entityAt(pos.x+10, pos.y);
     if (item) {
-      let { name, description } = item.kind;
-      // console.log("ENTITY IS", {name, description });
-      return description;
+      return this._world.interact(item);
     }
-    // return '(..)';
   }
 
   interactionPos(): { x:number, y:number }  {
@@ -99,17 +95,13 @@ export class Player extends ex.Actor {
     if (direction === 'right') { this.vel.x = step; }
     if (direction === 'up')    { this.vel.y = -step; }
     if (direction === 'down')  { this.vel.y = step; }
-    this.currentDrawing = this.alex[direction];
-    // this.addDrawing(this.alex[direction]);
-    // this.setZIndex(this.y);
   }
 
-  //stopMovingDirection = (direction: Direction) => {
-  //  switch(direction) {
-  //    case 'left': this.vel.x = 0;
-  //    case 'right': this.vel.x = 0;
-  //    case 'up': this.vel.y = 0;
-  //    case 'down': this.vel.y = 0;
-  //  }
-  //}
+  update(engine, delta) {
+    this.currentDrawing = this.alex[this.facing];
+    super.update(engine, delta);
+    this.setZIndex(this.y);
+    //console.log({z: this.getZIndex()})
+  }
+
 }

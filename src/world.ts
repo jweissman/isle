@@ -1,6 +1,6 @@
 import * as ex from 'excalibur';
 import TiledResource from '@excaliburjs/excalibur-tiled';
-import { Isle, Item, ItemKind } from './models';
+import { Isle, Item, ItemKind, buildItem } from './models';
 
 // hmmmm (maybe more like a world-factory?)
 class World {
@@ -15,21 +15,23 @@ class World {
         this._processTiledMap();
     }
 
+    interact(it: Item): string {
+      console.log("WOULD INTERACT WITH ITEM", { it });
+      // it.activate();
+
+      let { name, description } = it.kind;
+      return it.activate() || description;
+    }
+
     entityAt(x: number, y: number): Item {
         let cell = this.tileMap.getCellByPoint(x, y); //interactionPos.x, interactionPos.y);
-        //console.log(
-        //  "WOULD ATTEMPT TO INTERACT IN DIRECTION w/ CELL: ", 
-        //  { dir: this.facing, cell }
-        //);
         if (cell.sprites.length > 1) {
-            //console.log("goodness, there is something there!!!", cell);
             let it : Item = cell['__isle_item'];
             return it; //cell['__isle_item']; // sprites[1] };
             //  // we need to build some kind of object model we can deref
             //  // all we'll have is a spriteId...
         }
         return null; // { nothing: 'to see here' };
-
     }
 
     _processTiledMap() {
@@ -116,44 +118,10 @@ class World {
                 // we have another sprite, maybe a thing to build a box for?
                 if (cell.sprites[1]) {
                     const spriteId = cell.sprites[1].spriteId;
-                    // console.log("processing cell with spriteId", { spriteId });
+                    //console.log("processing cell with spriteId", { spriteId });
                     const collision = spriteCollisionById[spriteId]; //cell.sprites[1].spriteId];
                     if (collision) {
-                        let block = new ex.Actor(cell.x, cell.y, 32, 32);
-                        // + collision.x, cell.y + collision.y, 32, 32);
-                        block.collisionType = ex.CollisionType.Fixed;
-                        if (collision.ellipse) {
-                            let center = new ex.Vector(
-                                    collision.x + collision.width/2,
-                                    collision.y + collision.height/2,
-                                )
-                            block.body.useCircleCollision(
-                                collision.height / 2,
-                                center
-                            );
-                        } else if (collision.polygon) {
-                            //console.log("poly", { polygon: collision.polygon });
-                            //debugger;
-                            let vecs : ex.Vector[] = collision.polygon.map(
-                                ({ x, y }) => new ex.Vector(
-                                    x + collision.x,
-                                    y + collision.y
-                                )
-                            );
-
-                            block.body.usePolygonCollision(
-                                vecs
-                            )
-                        } else {
-                            console.warn("implement collider:", { collision })
-                            //debugger;
-                        }
-                        if (this.debugBoxes) {
-                            // console.log({ collision, block });
-                            block.draw = (ctx) => {
-                                block.collisionArea.debugDraw(ctx, ex.Color.LightGray);
-                            }
-                        }
+                        let block = this._buildColliderBlock(collision, cell);
                         //console.log({collision});
                         this.blockingActors.push(block);
 
@@ -161,14 +129,13 @@ class World {
                         const kind: ItemKind = itemKindBySpriteId[spriteId];
                         //debugger;
                         if (kind) { // model it!
-                            let theItem = {
-                                kind,
-                                x: cell.x,
-                                y: cell.y
-                            };
+                            let tilesprite: ex.TileSprite = cell.sprites[1];
+                            let theItem: Item = buildItem(kind, tilesprite);
+                            // console.log({ theItem, tilesprite });
                             this.island.items.push(theItem);
                             // need some way back from the cell?
                             cell['__isle_item'] = theItem;
+                            //cell.sprites[1].setZ
                         }
                     }
                     // add it to the level...
@@ -176,6 +143,46 @@ class World {
                 }
             }
         });
+    }
+
+    _buildColliderBlock(collision, cell: ex.Cell): ex.Actor {
+        let block = new ex.Actor(cell.x, cell.y, 32, 32);
+        // + collision.x, cell.y + collision.y, 32, 32);
+        block.collisionType = ex.CollisionType.Fixed;
+        if (collision.ellipse) {
+            let center = new ex.Vector(
+                collision.x + collision.width / 2,
+                collision.y + collision.height / 2,
+            )
+            block.body.useCircleCollision(
+                collision.height / 2,
+                center
+            );
+        } else if (collision.polygon) {
+            //console.log("poly", { polygon: collision.polygon });
+            //debugger;
+            let vecs: ex.Vector[] = collision.polygon.map(
+                ({ x, y }) => new ex.Vector(
+                    x + collision.x,
+                    y + collision.y
+                )
+            );
+
+            block.body.usePolygonCollision(
+                vecs
+            )
+        } else {
+            console.warn("implement collider:", { collision })
+            //debugger;
+        }
+        if (this.debugBoxes) {
+            // console.log({ collision, block });
+            block.draw = (ctx) => {
+                block.collisionArea.debugDraw(ctx, ex.Color.LightGray);
+            }
+        }
+
+        return block;
     }
 }
 

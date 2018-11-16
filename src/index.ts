@@ -15,7 +15,7 @@ import { GameConfig } from './game_config';
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 4,
+  zoom: 3,
   playerStart: { x: 30, y: 30 },
   playerSpeed: 6,
 }
