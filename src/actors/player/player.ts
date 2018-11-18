@@ -21,9 +21,9 @@ export class Player extends ex.Actor {
   ) {
     super();
 
-    this.setWidth(20);
-    this.setHeight(14);
-    this.collisionArea.pos.y = 28;
+    this.setWidth(22);
+    this.setHeight(18);
+    this.collisionArea.pos.y = 20;
 
     this.color = new ex.Color(255, 255, 255);
 
@@ -61,7 +61,9 @@ export class Player extends ex.Actor {
 
   interactionPos(): { x:number, y:number }  {
     let interactionPos = this.getCenter().clone();
-    let yOff = this.facing === 'up' ? 10 : 16;
+    let yOff = 20; //this.facing === 'up' ? 10 : 16;
+    if (this.facing === 'up') { yOff -= 2; }
+    if (this.facing === 'down') { yOff -= 4; }
     interactionPos.y += yOff; //this.getHeight();
     interactionPos.x -= 2;
     addScalarToVec(interactionPos, this.facing, 24);
@@ -80,8 +82,11 @@ export class Player extends ex.Actor {
         ctx.fillRect(pos.x - 10, pos.y, 4, 4);
         ctx.fillRect(pos.x + 10, pos.y, 4, 4);
       }
+      ctx.fillRect(this.x, this.computeZ(), 3, 3);
     }
   }
+
+  computeZ = () => (this.y + 20) / 10000; //8;
 
   halt = () => {
     this.vel = new ex.Vector(0, 0);
@@ -100,7 +105,7 @@ export class Player extends ex.Actor {
   update(engine, delta) {
     this.currentDrawing = this.alex[this.facing];
     super.update(engine, delta);
-    this.setZIndex(this.y);
+    this.setZIndex(this.computeZ());
     //console.log({z: this.getZIndex()})
   }
 

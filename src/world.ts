@@ -1,6 +1,7 @@
 import * as ex from 'excalibur';
-import TiledResource from '@excaliburjs/excalibur-tiled';
+import { TiledResource } from '@excaliburjs/excalibur-tiled';
 import { Isle, Item, ItemKind, buildItem } from './models';
+import { Thing } from './actors/thing';
 
 // hmmmm (maybe more like a world-factory?)
 class World {
@@ -16,17 +17,18 @@ class World {
     }
 
     interact(it: Item): string {
-      console.log("WOULD INTERACT WITH ITEM", { it });
-      // it.activate();
+        console.log("WOULD INTERACT WITH ITEM", { it });
+        // it.activate();
 
-      let { name, description } = it.kind;
-      return it.activate() || description;
+        let { name, description } = it.kind;
+        return it.activate() || description;
     }
 
     entityAt(x: number, y: number): Item {
         let cell = this.tileMap.getCellByPoint(x, y); //interactionPos.x, interactionPos.y);
-        if (cell.sprites.length > 1) {
-            let it : Item = cell['__isle_item'];
+        console.log("looking for entity at ", { x, y, cell });
+        if (cell && cell['__isle_item']) { //}.sprites.length > 1) {
+            let it: Item = cell['__isle_item'];
             return it; //cell['__isle_item']; // sprites[1] };
             //  // we need to build some kind of object model we can deref
             //  // all we'll have is a spriteId...
@@ -35,7 +37,7 @@ class World {
     }
 
     _processTiledMap() {
-        let _mapRes = this.mapResource; // Resources.Map;
+        let _mapRes: TiledResource = this.mapResource; // Resources.Map;
         let terrainMeta = {};
         let spriteTerrainById = {};
         let spriteCollisionById = {};
@@ -86,8 +88,11 @@ class World {
                 }, {});
 
                 console.log({ spriteCollisionById });
+                console.log({ ts });
 
                 itemKindBySpriteId = ts.tiles.reduce((acc, curr) => {
+                    // debugger;
+                    //console.log({ curr });
                     if (curr.properties) {
                         let currMeta = curr.properties.reduce((acc, curr) => {
                             let { name, value } = curr;
@@ -95,12 +100,12 @@ class World {
                         }, {});
                         return (<any>Object).assign(acc, { [curr.id]: currMeta });
                     } else {
-                        console.warn("no props for sprite with id", {curr});
+                        console.warn("no props for sprite with id", { curr });
                         // no props for this one?
                         return acc;
                     }
                 }, {})
-                console.log({ itemKindBySpriteId })
+                //console.log({ itemKindBySpriteId })
             }
         });
 
@@ -113,77 +118,45 @@ class World {
             if (cell.sprites[0]) {
                 let tile = spriteTerrainById[cell.sprites[0].spriteId];
                 cell = Object.assign(cell, tile);
-                // cell.height = cell.y;
-
                 // we have another sprite, maybe a thing to build a box for?
                 if (cell.sprites[1]) {
-                    const spriteId = cell.sprites[1].spriteId;
-                    //console.log("processing cell with spriteId", { spriteId });
-                    const collision = spriteCollisionById[spriteId]; //cell.sprites[1].spriteId];
-                    if (collision) {
-                        let block = this._buildColliderBlock(collision, cell);
-                        //console.log({collision});
-                        this.blockingActors.push(block);
+                    // we could use the sprite, but... also we could do something else
+                    // build our own sprite with z-indexes
 
-                        // de-ref from sprite id
-                        const kind: ItemKind = itemKindBySpriteId[spriteId];
-                        //debugger;
-                        if (kind) { // model it!
-                            let tilesprite: ex.TileSprite = cell.sprites[1];
-                            let theItem: Item = buildItem(kind, tilesprite);
-                            // console.log({ theItem, tilesprite });
-                            this.island.items.push(theItem);
-                            // need some way back from the cell?
-                            cell['__isle_item'] = theItem;
-                            //cell.sprites[1].setZ
-                        }
+                    let { spriteSheetKey, spriteId } = cell.sprites[1];
+                    const kind: ItemKind = itemKindBySpriteId[spriteId];
+
+                    // we could get the image and attach it to an actor
+                    const collision = spriteCollisionById[spriteId]; //cell.sprites[1].spriteId];
+                    cell.removeSprite(cell.sprites[1]);
+
+                    let newSprite: ex.Sprite = (<any>this.tileMap)._spriteSheets[spriteSheetKey].getSprite(spriteId)
+                    //if (kind.double)
+                    // for two-state chests etc, grab the next sprite?
+                    let nextSprite: ex.Sprite = (<any>this.tileMap)._spriteSheets[spriteSheetKey].getSprite(spriteId)
+                    let z: number = (kind && kind.z) || 0;
+                    let thing: Thing = //collision
+                        new Thing(cell.x+16, cell.y+16, z, newSprite);
+
+                    thing.constructCollisionArea(collision);
+                    thing.addDrawing(newSprite);
+                    thing['_cell'] = cell;
+
+                    // de-ref from sprite id
+                    if (kind) { // model it!
+                        let theItem: Item = buildItem(kind, thing, newSprite); //, tilesprite);
+                        this.island.items.push(theItem);
+
+                        cell['__isle_item'] = theItem;
+                        //console.log("created item", { theItem });
                     }
-                    // add it to the level...
-                    // levelOne.add(block);
+
+                    this.blockingActors.push(thing);
                 }
             }
         });
     }
 
-    _buildColliderBlock(collision, cell: ex.Cell): ex.Actor {
-        let block = new ex.Actor(cell.x, cell.y, 32, 32);
-        // + collision.x, cell.y + collision.y, 32, 32);
-        block.collisionType = ex.CollisionType.Fixed;
-        if (collision.ellipse) {
-            let center = new ex.Vector(
-                collision.x + collision.width / 2,
-                collision.y + collision.height / 2,
-            )
-            block.body.useCircleCollision(
-                collision.height / 2,
-                center
-            );
-        } else if (collision.polygon) {
-            //console.log("poly", { polygon: collision.polygon });
-            //debugger;
-            let vecs: ex.Vector[] = collision.polygon.map(
-                ({ x, y }) => new ex.Vector(
-                    x + collision.x,
-                    y + collision.y
-                )
-            );
-
-            block.body.usePolygonCollision(
-                vecs
-            )
-        } else {
-            console.warn("implement collider:", { collision })
-            //debugger;
-        }
-        if (this.debugBoxes) {
-            // console.log({ collision, block });
-            block.draw = (ctx) => {
-                block.collisionArea.debugDraw(ctx, ex.Color.LightGray);
-            }
-        }
-
-        return block;
-    }
 }
 
 export { World };

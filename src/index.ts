@@ -1,26 +1,27 @@
 import * as ex from 'excalibur';
 import { LevelOne } from './scenes/level-one/level-one';
 import { MainMenu } from './scenes/main-menu/main-menu';
-import { Player, Enemy, Logo } from './actors';
+import { Player } from './actors';
 import { Resources } from './resources';
 import { Game } from './game';
 
-import { Isle } from './models';
+// import { Isle } from './models';
 
 import { keyToDirection, Direction, mode } from './util';
-import { TileMap } from 'excalibur';
+// import { TileMap } from 'excalibur';
 import { World } from './world';
+import { Thing } from "./actors/thing";
 import { GameConfig } from './game_config';
 
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 3,
+  zoom: 2,
   playerStart: { x: 30, y: 30 },
-  playerSpeed: 6,
+  playerSpeed: 2.8,
 }
 
-ex.Physics.collisionPasses = 8;
+ex.Physics.collisionPasses = 16;
 
 // Islands are either from before or for after humankind. (gd)
 
@@ -117,7 +118,13 @@ game.start().then(() => {
   levelOne.addTileMap(tileMap);
   player.wireWorld(world); //wireMap(tileMap);
 
-  world.blockingActors.forEach(actor => levelOne.add(actor));
+  world.blockingActors.forEach((actor: Thing) => {
+    //let y = actor['_cell'].y; // - 7;
+    //console.log("would set z to", {y, currentZeD: actor.getZIndex()});
+    levelOne.add(actor);
+    actor.setZIndex(actor.computeZ());
+  });
+  output.setZIndex(1000);
 
   if (config.debugCells) {
     let lastViewedCell = null;
