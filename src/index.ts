@@ -17,11 +17,11 @@ const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
   zoom: 2,
-  playerStart: { x: 30, y: 30 },
-  playerSpeed: 2.8,
+  playerStart: { x: 24, y: 20 },
+  playerSpeed: 5.4,
 }
 
-ex.Physics.collisionPasses = 16;
+ex.Physics.collisionPasses = 6;
 
 // Islands are either from before or for after humankind. (gd)
 
