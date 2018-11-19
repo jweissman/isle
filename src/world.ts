@@ -5,20 +5,23 @@ import { Thing } from './actors/thing';
 // import { GameConfig } from './game_config';
 // import { SpriteSheet, Sprite } from 'excalibur';
 
-// hmmmm (maybe more like a world-factory?)
+// hmmmm (maybe more like a world-factory? [now def more world-ly...])
 class World {
     island: Isle
     tileMap: ex.TileMap
-    blockingActors: Array<ex.Actor>
+    itemKinds: { [key: string]: ItemKind }
+    // blockingActors: Array<ex.Actor>
     // itemKindBySpriteId: { [spriteId: number]: ItemKind }
 
     constructor(
-        public mapResource: TiledResource,
+        //public mapResource: TiledResource,
         public debugBoxes: boolean,
+        public scene: ex.Scene
         //public config: GameConfig
     ) {
         this.island = new Isle('sorna');
-        this._processTiledMap();
+        this.itemKinds = {};
+        //this._processTiledMap();
     }
 
     interact(it: Item): string {
@@ -39,8 +42,75 @@ class World {
         return null;
     }
 
-    _processTiledMap() {
-        let _mapRes: TiledResource = this.mapResource; // Resources.Map;
+    destroy(it: Item) {
+        console.log("DESTROY", {it});
+        let { kind, cell } = it;
+        let { size } = kind;
+        for (const x of Array(size).keys()) {
+            for (const y of Array(size).keys()) {
+                let cellToMark = this.tileMap.getCellByIndex(cell.index + x + (y * this.tileMap.cols));
+                // remove item from list...
+                cellToMark['__isle_item'] = null;
+            }
+        }
+
+        it.actor.kill();
+
+        return true;
+    }
+
+    // has to have a cell to attach item...
+    spawn(kind: ItemKind, cell: ex.Cell): Thing { //}, x: number = 0, y: number =0): Thing { //}, x: number, y: number): Thing {
+        //let obj = entityCreator(x,y,32,32);
+        let { size } = kind;
+        size = size || 1;
+
+        let x = cell.x + 16 * size;
+        let y = cell.y + 16 * size;
+        let thing: Thing = new Thing(x, y, size, size, this.debugBoxes);
+
+        if (kind.drawing) {
+          thing.addDrawing(kind.drawing);
+        }
+
+        thing.constructCollisionArea(kind.collision);
+
+        let theItem: Item = buildItem(kind, thing, cell, this);
+        this.island.items.push(theItem);
+        for (const x of Array(size).keys()) {
+            for (const y of Array(size).keys()) {
+                let cellToMark = this.tileMap.getCellByIndex(cell.index + x + (y * this.tileMap.cols));
+                cellToMark['__isle_item'] = theItem;
+                //if (cellToRemove.sprites[1]) {
+                //    //console.log("REMOVE SPRITE FROM", {x,y,cellToRemove});
+                //    cellToRemove.removeSprite(cellToRemove.sprites[1]);
+                //    cellsToMark.push(cellToRemove);
+                //} else {
+                //    // console.warn("NO SPRITE TO REMOVE FROM", { x, y, size });
+                //}
+            }
+        }
+
+        // attach item to it???
+
+        //cell['__isle_item'] = theItem;
+        // cellsToMark.push(cell);
+        // if (cellsToMark.length) {
+        //     cellsToMark.forEach((c: ex.Cell) => {
+        //         c['__isle_item'] = theItem
+        //         //c.clearSprites();
+        //     });
+        // }
+
+        this.scene.add(thing);
+        thing.setZIndex(thing.computeZ());
+        console.log("SPAWN", { kind, thing });
+        return thing;
+        //cell.x + xOff, cell.y + yOff, z, size, this.debugBoxes);
+    }
+
+    processTiledMap(mapResource: TiledResource) {
+        let _mapRes: TiledResource = mapResource; // Resources.Map;
         let terrainMeta = {};
         let spriteTerrainById = {};
         let spriteCollisionById = {};
@@ -114,7 +184,7 @@ class World {
 
         this.tileMap = _mapRes.getTileMap();
 
-        this.blockingActors = [];
+        // this.blockingActors = [];
 
         this.tileMap.data.forEach((cell: ex.Cell, index) => {
 
@@ -125,18 +195,20 @@ class World {
                 if (cell.sprites[1]) {
                     // we could use the sprite, but... also we could do something else
                     // build our own sprite with z-indexes
+                    // better yet: spawn an entity
 
                     let { spriteSheetKey, spriteId } = cell.sprites[1];
                     const kind: ItemKind = itemKindBySpriteId[spriteId];
+                    this.itemKinds[kind.name] = kind;
 
                     // we could get the image and attach it to an actor
                     const collision = spriteCollisionById[spriteId]; //cell.sprites[1].spriteId];
-                    cell.removeSprite(cell.sprites[1]);
+                    //cell.removeSprite(cell.sprites[1]);
 
                     let sheet: ex.SpriteSheet = (<any>this.tileMap)._spriteSheets[spriteSheetKey];
                     let xOff = 16, yOff = 16;
                     let size = kind.size || 1;
-                    let cellsToMark = [];
+                    //let cellsToMark = [];
                     if (size > 1) {
                         xOff = 16 * size; yOff = 16 * size;
                         for (const x of Array(size).keys()) {
@@ -146,7 +218,7 @@ class World {
                                 if (cellToRemove.sprites[1]) {
                                     //console.log("REMOVE SPRITE FROM", {x,y,cellToRemove});
                                     cellToRemove.removeSprite(cellToRemove.sprites[1]);
-                                    cellsToMark.push(cellToRemove);
+                                    //cellsToMark.push(cellToRemove);
                                 } else {
                                     // console.warn("NO SPRITE TO REMOVE FROM", { x, y, size });
                                 }
@@ -155,33 +227,35 @@ class World {
                     }
 
                     let z: number = (kind && kind.z) || 0;
-                    let thing: Thing = new Thing(cell.x + xOff, cell.y + yOff, z, size, this.debugBoxes);
+                    kind.collision = collision;
+                    let newSprite: ex.Sprite = sheet.getSprite(spriteId)
+                    kind.drawing = newSprite; 
 
-                    thing.constructCollisionArea(collision);
-                    if (!thing.currentDrawing) {
-                        let newSprite: ex.Sprite = sheet.getSprite(spriteId)
-                        thing.addDrawing(newSprite);
-                    }
+                    let thing: Thing = this.spawn(kind, cell); //, xOff, yOff); //, size);
+                    console.log('spawned', {thing});
 
-                    if (kind) { // model it!
-                        let theItem: Item = buildItem(kind, thing);
-                        this.island.items.push(theItem);
 
-                        //cell['__isle_item'] = theItem;
-                        cellsToMark.push(cell);
-                        if (cellsToMark.length) {
-                            cellsToMark.forEach((c: ex.Cell) => {
-                                c['__isle_item'] = theItem
-                                //c.clearSprites();
-                            });
-                        }
-                        //console.log("created item", { theItem });
-                    }
+                    //if (kind) { // model it!
+                    //    let theItem: Item = buildItem(kind, thing, this);
+                    //    this.island.items.push(theItem);
 
-                    this.blockingActors.push(thing);
+                    //    //cell['__isle_item'] = theItem;
+                    //    cellsToMark.push(cell);
+                    //    if (cellsToMark.length) {
+                    //        cellsToMark.forEach((c: ex.Cell) => {
+                    //            c['__isle_item'] = theItem
+                    //            //c.clearSprites();
+                    //        });
+                    //    }
+                    //    //console.log("created item", { theItem });
+                    //}
+
+                    // this.blockingActors.push(thing);
                 }
             }
         });
+
+        console.log({ itemKinds: this.itemKinds });
     }
 
 }

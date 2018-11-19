@@ -5,6 +5,8 @@ interface GameConfig {
 
   playerStart: { x: number, y: number },
   playerSpeed: number,
+
+  bgMusic: boolean,
 }
 
 export { GameConfig };

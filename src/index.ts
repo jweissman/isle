@@ -26,7 +26,8 @@ const config: GameConfig = {
   debugBoundingBoxes: false,
   zoom: 2,
   playerStart: { x: 24, y: 20 },
-  playerSpeed: 7.3,
+  playerSpeed: 8.5,
+  bgMusic: false
 }
 
 
@@ -36,6 +37,8 @@ const game = new Game(800, 600, config);
 // game.add('main-menu', mainMenu);
 
 const levelOne = new LevelOne();
+const world = new World(config.debugBoundingBoxes, levelOne);
+
 
 const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
 const alexSprites = new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64);
@@ -104,18 +107,18 @@ game.add('wander', levelOne);
 
 
 game.start().then(() => {
-  let world = new World(Resources.Map, config.debugBoundingBoxes);
+  world.processTiledMap(Resources.Map);
 
   let tileMap = world.tileMap;
   levelOne.addTileMap(tileMap);
   player.wireWorld(world); //wireMap(tileMap);
 
-  world.blockingActors.forEach((actor: Thing) => {
-    //let y = actor['_cell'].y; // - 7;
-    //console.log("would set z to", {y, currentZeD: actor.getZIndex()});
-    levelOne.add(actor);
-    actor.setZIndex(actor.computeZ());
-  });
+  //world.blockingActors.forEach((actor: Thing) => {
+  //  //let y = actor['_cell'].y; // - 7;
+  //  //console.log("would set z to", {y, currentZeD: actor.getZIndex()});
+  //  levelOne.add(actor);
+  //  actor.setZIndex(actor.computeZ());
+  //});
   output.setZIndex(1000);
 
   if (config.debugCells) {
@@ -147,10 +150,14 @@ game.start().then(() => {
   //}
 
   // really should be an audio player
-  let theme = Resources.FineMist; //Science;
-  console.log('about to play music', { theme, isLoaded: theme.isLoaded() });
-  // wait a tiny bit for music to load??? (seems to work welll)
-  setTimeout(() => theme.play(0.125), 4000);
+  if (config.bgMusic) {
+    let theme = Resources.FineMist; //Science;
+    // wait a tiny bit for music to load??? (seems to work welll)
+    setTimeout(() => {
+      console.log('about to play music', { theme, isLoaded: theme.isLoaded() });
+      theme.play(0.2) //1.0)
+    }, 3000);
+  }
 
 
 });

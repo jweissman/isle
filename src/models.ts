@@ -1,9 +1,9 @@
 import * as ex from 'excalibur';
-import { TileSprite } from "excalibur";
-import { Thing } from "./actors/thing";
 import { Resources } from './resources';
+import { World } from './world';
+import { Cell } from 'excalibur';
 
-type Material = 'wood' | 'stone' | 'glass'; // | 'rope'
+//type Material = 'wood' | 'stone' | 'glass'; // | 'rope'
 
 interface ItemKind {
     name: string
@@ -12,6 +12,9 @@ interface ItemKind {
 
     z?: number
     size?: number
+
+    drawing?: ex.Sprite
+    collision?: any
     // alternate?: boolean
 }
 
@@ -21,12 +24,16 @@ class Item {
     constructor(
         public kind: ItemKind,
         public actor: ex.Actor,
+        public cell: ex.Cell, // the 'root' cell (upper-left corner of large objs)
         //public sprite: ex.Sprite,
-        public state: Object = {}
+        //public state: Object = {},
+        public world: World
     ) {
         //console.log("CREATED ITEM", { kind: this.kind, sprite: this.sprite });
-
+        this.initialize();
     }
+
+    initialize() {}
 
     activate() {
       console.warn("item is non-interactive",
@@ -47,11 +54,11 @@ const BasicSpriteMap = {
     palm,
 }
 
+
 class Chest extends Item {
     state: { open: boolean } = { open: false }
 
-    constructor(kind,actor,state) {
-        super(kind,actor,state);
+    initialize() {
         this.actor.addDrawing('closed', BasicSpriteMap.chestClosed);
         this.actor.addDrawing('open', BasicSpriteMap.chestOpen);
     }
@@ -71,30 +78,44 @@ class Chest extends Item {
 }
 
 class Palm extends Item {
-    constructor(kind,actor,state) {
-        super(kind,actor,state);
+    initialize() {
         this.actor.addDrawing('palm', BasicSpriteMap.palm);
         this.actor.setDrawing('palm');
     }
 }
 
+//class WoodLogStack extends Item {}
+
 class GreatPalm extends Item {
     state: { hp: number } = { hp: 100 }
-    constructor(kind, actor, state) {
-        super(kind, actor, state);
+
+    initialize() {
         this.actor.addDrawing('palm', BasicSpriteMap.greatPalm);
         this.actor.setDrawing('palm');
-        console.log("CREATE GREAT PALM!!!");
     }
 
     activate() {
         if (this.state.hp > 0) {
-            this.state.hp -= 25;
-            return `once a seed (${this.state.hp}%)`
+            const message: string = `once a seed (${this.state.hp}%)`
+            this.state.hp -= 30;
+            return message;
         } else {
-            this.actor.kill();
-            // this.actor.actions.fade(0.5, 2000);
-            //setTimeout(() => this.actor.kill(), 2000);
+            let base: ex.Cell = //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
+            this.world.tileMap.getCellByIndex(
+                this.cell.index + 
+                  (this.kind.size/2) +
+                  ((this.kind.size-1) * this.world.tileMap.cols)
+            );
+            // cell.clearSprites();
+
+            this.world.destroy(this);
+            let newThing = this.world.spawn(
+                this.world.itemKinds['WoodLogStack'],
+                base,
+            );
+            console.log("TIMBER", { base, newThing }); //, newThing });
+            //this.actor.actions..fade(0.5, 2000);
+            // setTimeout(() => this.world.destroy(this), 2000);
             return "timber";
         }
     }
@@ -103,15 +124,16 @@ class GreatPalm extends Item {
 const itemClasses = {
     Chest,
     Palm,
-    GreatPalm
+    GreatPalm,
+    //Lumber
 };
 
-const buildItem = (kind: ItemKind, actor: ex.Actor): Item => {
+const buildItem = (kind: ItemKind, actor: ex.Actor, cell: Cell, world: World): Item => {
     if (itemClasses[kind.name]) {
         //itemClasses[kind.name].sprites[state] = sprite; //can i assign to 'static' members like that??
-        return new itemClasses[kind.name](kind, actor);
+        return new itemClasses[kind.name](kind, actor, cell, world);
     } else {
-        return new Item(kind, actor);
+        return new Item(kind, actor, cell, world);
     }
 }
 

@@ -10,7 +10,6 @@ export class Thing extends ex.Actor {
         public debugBoxes: boolean,
     ) {
         super(x, y, 32 * size, 32 * size, ex.Color.Chartreuse);
-        
     }
 
     draw(ctx, engine) {
@@ -21,7 +20,7 @@ export class Thing extends ex.Actor {
         }
     }
 
-    computeZ = () => (this.y + this.zOff * 16); // / 10000;
+    computeZ = () => (this.y + 4 + (this.size-1) * 16); // / 10000;
     constructCollisionArea(collision) {
         if (!collision) {
             if (this.size > 1) {
