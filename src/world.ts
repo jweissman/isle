@@ -2,6 +2,8 @@ import * as ex from 'excalibur';
 import { TiledResource } from '@excaliburjs/excalibur-tiled';
 import { Isle, Item, ItemKind, buildItem } from './models';
 import { Thing } from './actors/thing';
+import { GameConfig } from './game_config';
+import { SpriteSheet, Sprite } from 'excalibur';
 
 // hmmmm (maybe more like a world-factory?)
 class World {
@@ -10,9 +12,12 @@ class World {
     blockingActors: Array<ex.Actor>
     // itemKindBySpriteId: { [spriteId: number]: ItemKind }
 
-    constructor(public mapResource: TiledResource, public debugBoxes: boolean) {
+    constructor(
+        public mapResource: TiledResource,
+        public debugBoxes: boolean,
+        //public config: GameConfig
+    ) {
         this.island = new Isle('sorna');
-
         this._processTiledMap();
     }
 
@@ -113,7 +118,7 @@ class World {
 
         this.blockingActors = [];
 
-        this.tileMap.data.forEach((cell: ex.Cell) => {
+        this.tileMap.data.forEach((cell: ex.Cell, index) => {
 
             if (cell.sprites[0]) {
                 let tile = spriteTerrainById[cell.sprites[0].spriteId];
@@ -130,24 +135,40 @@ class World {
                     const collision = spriteCollisionById[spriteId]; //cell.sprites[1].spriteId];
                     cell.removeSprite(cell.sprites[1]);
 
-                    let newSprite: ex.Sprite = (<any>this.tileMap)._spriteSheets[spriteSheetKey].getSprite(spriteId)
-                    //if (kind.double)
-                    // for two-state chests etc, grab the next sprite?
-                    let nextSprite: ex.Sprite = (<any>this.tileMap)._spriteSheets[spriteSheetKey].getSprite(spriteId)
+                    let sheet: ex.SpriteSheet = (<any>this.tileMap)._spriteSheets[spriteSheetKey];
+                    let xOff = 16, yOff = 16;
+                    let size = kind.size || 1;
+                    let cellsToMark = [];
+                    if (size > 1) {
+                        for (const x of Array(size).keys()) {
+                            for (const y of Array(size).keys()) {
+                                let cellToRemove = this.tileMap.getCellByIndex(index + x + y * this.tileMap.cols);
+                                console.log("REMOVE SPRITE FROM", {cellToRemove});
+                                cellToRemove.removeSprite(cellToRemove.sprites[1]);
+                                cellsToMark.push(cellToRemove);
+                            }
+                        }
+                    }
+
                     let z: number = (kind && kind.z) || 0;
-                    let thing: Thing = //collision
-                        new Thing(cell.x+16, cell.y+16, z, newSprite);
+                    let thing: Thing = new Thing(cell.x + xOff, cell.y + yOff, z, size, this.debugBoxes);
 
                     thing.constructCollisionArea(collision);
-                    thing.addDrawing(newSprite);
+                    if (!thing.currentDrawing) {
+                        let newSprite: ex.Sprite = sheet.getSprite(spriteId)
+                        thing.addDrawing(newSprite);
+                    }
                     thing['_cell'] = cell;
 
                     // de-ref from sprite id
                     if (kind) { // model it!
-                        let theItem: Item = buildItem(kind, thing, newSprite); //, tilesprite);
+                        let theItem: Item = buildItem(kind, thing); // newSprite); //, tilesprite);
                         this.island.items.push(theItem);
 
                         cell['__isle_item'] = theItem;
+                        if (cellsToMark.length) {
+                            cellsToMark.forEach(c => c['__isle_item'] = theItem);
+                        }
                         //console.log("created item", { theItem });
                     }
 

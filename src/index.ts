@@ -16,9 +16,9 @@ import { GameConfig } from './game_config';
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 2,
+  zoom: 4,
   playerStart: { x: 24, y: 20 },
-  playerSpeed: 5.4,
+  playerSpeed: 12.0,
 }
 
 ex.Physics.collisionPasses = 6;

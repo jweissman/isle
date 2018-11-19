@@ -11,6 +11,7 @@ interface ItemKind {
     //public sprite: ex.Sprite,
 
     z?: number
+    size?: number
     // alternate?: boolean
 }
 
@@ -35,9 +36,15 @@ class Item {
 }
 
 const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
+const greatPalm = Resources.GreatPalm.asSprite();
+const palm = Resources.Palm.asSprite();
+
+//new ex.Sprite(Resources.GreatPalm.once)
 const BasicSpriteMap = {
     chestClosed: basicSprites.getSprite(2),
     chestOpen: basicSprites.getSprite(3),
+    greatPalm, //: basicSprites.getSprite
+    palm,
 }
 
 class Chest extends Item {
@@ -47,32 +54,46 @@ class Chest extends Item {
         super(kind,actor,state);
         this.actor.addDrawing('closed', BasicSpriteMap.chestClosed);
         this.actor.addDrawing('open', BasicSpriteMap.chestOpen);
-        // this.actor.setDrawing(BasicSpriteMap.chestClosed); //this.sprites.closed);
-        // this.actor.setDrawing(BasicSpriteMap.chestOpen); //this.sprites.closed);
     }
 
     activate() {
-        console.log("Chest activated!"); //, { sprite: this.sprite });
+        console.log("Chest activated!");
         if (this.state.open) {
             this.actor.setDrawing('closed');
-            //this.sprite.spriteId -= 1;
             this.state = { open: false };
             return 'closed';
         } else {
             this.actor.setDrawing('open');
-            //this.sprite.spriteId += 1;
             this.state = { open: true }
             return 'opened';
         }
-        // return 'sesame';
+    }
+}
+
+class Palm extends Item {
+    constructor(kind,actor,state) {
+        super(kind,actor,state);
+        this.actor.addDrawing('palm', BasicSpriteMap.palm);
+        this.actor.setDrawing('palm');
+    }
+}
+
+class GreatPalm extends Item {
+    constructor(kind,actor,state) {
+        super(kind,actor,state);
+        this.actor.addDrawing('palm', BasicSpriteMap.greatPalm);
+        this.actor.setDrawing('palm');
+        console.log("CREATE GREAT PALM!!!");
     }
 }
 
 const itemClasses = {
-    Chest
+    Chest,
+    Palm,
+    GreatPalm
 };
 
-const buildItem = (kind: ItemKind, actor: ex.Actor, sprite: ex.Sprite): Item => {
+const buildItem = (kind: ItemKind, actor: ex.Actor): Item => {
     if (itemClasses[kind.name]) {
         //itemClasses[kind.name].sprites[state] = sprite; //can i assign to 'static' members like that??
         return new itemClasses[kind.name](kind, actor);

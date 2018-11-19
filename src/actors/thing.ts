@@ -1,19 +1,43 @@
 import * as ex from 'excalibur';
+import { GameConfig } from '../game_config';
 
 export class Thing extends ex.Actor {
-    constructor(public x: number, public y: number, public zOff: number = 0, protected sprite: ex.Sprite) {
-        super(x, y, 32, 32, ex.Color.Chartreuse);
-        // this.addDrawing(sprite);
+    constructor(
+        public x: number,
+        public y: number,
+        public zOff: number = 0,
+        public size: number = 1,
+        public debugBoxes: boolean,
+    ) {
+        super(x, y, 32 * size, 32 * size, ex.Color.Chartreuse);
+        
     }
+
     draw(ctx, engine) {
         super.draw(ctx, engine);
-        //this.collisionArea.debugDraw(ctx, ex.Color.LightGray);
-        //ctx.fillRect(this.x, this.computeZ(), 5, 5);
+        if (this.debugBoxes) {
+            this.collisionArea.debugDraw(ctx, ex.Color.LightGray);
+            ctx.fillRect(this.x, this.computeZ(), 5, 5);
+        }
     }
-    computeZ = () => (this.y + 8 + this.zOff * 24) / 10000;
+
+    computeZ = () => (this.y + this.zOff * 16); // / 10000;
     constructCollisionArea(collision) {
         if (!collision) {
-            this.collisionType = ex.CollisionType.PreventCollision;
+            if (this.size > 1) {
+                // console.log("CREATE LARGE THING!!!")
+                this.collisionType = ex.CollisionType.Fixed;
+                this.body.useBoxCollision(
+                    new ex.Vector(
+                        0, //(32 * this.size) / 2,
+                        (16 * this.size) - 14 
+                    )
+                )
+                this.setHeight((26*this.size) / 4);
+                this.setWidth(24*this.size);
+            } else {
+                this.collisionType = ex.CollisionType.PreventCollision;
+            }
         }
         else {
             this.collisionType = ex.CollisionType.Fixed;

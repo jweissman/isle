@@ -19,11 +19,12 @@ export class Player extends ex.Actor {
     protected config: GameConfig,
     protected spriteSheet: ex.SpriteSheet 
   ) {
-    super();
+    super(x, y, 32, 64);
 
-    this.setWidth(22);
-    this.setHeight(18);
-    this.collisionArea.pos.y = 20;
+    //this.setWidth(24);
+    //this.setHeight(20);
+    this.collisionArea.body.useCircleCollision(6, new ex.Vector(0, 22));
+    //this.collisionArea.pos.y = 32;
 
     this.color = new ex.Color(255, 255, 255);
 
@@ -42,6 +43,7 @@ export class Player extends ex.Actor {
     // set facing + init sprite
     this.move('down');
     this.halt();
+    this.on('precollision', this.halt);
   }
 
   wireWorld = (world: World) => { this._world = world; }
@@ -86,7 +88,7 @@ export class Player extends ex.Actor {
     }
   }
 
-  computeZ = () => (this.y + 20) / 10000; //8;
+  computeZ = () => (this.y + 24); // / 10000; //8;
 
   halt = () => {
     this.vel = new ex.Vector(0, 0);
