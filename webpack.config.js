@@ -29,7 +29,7 @@ module.exports = ({ mode, presets } = { mode: "production", presets: [] }) => {
           exclude: /node_modules/
         },
         {
-          test: /\.(png|jpg|bmp|json|tmx|tsx)$/,
+          test: /\.(png|jpg|bmp|json|tmx|tsx|mp3)$/,
           use: [{
             loader: 'file-loader',
             options: {
@@ -56,7 +56,8 @@ module.exports = ({ mode, presets } = { mode: "production", presets: [] }) => {
       new CleanWebpackPlugin(['dist']),
       new CopyWebpackPlugin([
         { from: 'src/map', to: 'map/' },
-        { from: 'src/images', to: 'images' }
+        { from: 'src/images', to: 'images' },
+        { from: 'src/sounds', to: 'sounds' }
       ]),
       new HtmlWebPackPlugin({
         title: 'Isle'

@@ -2,8 +2,8 @@ import * as ex from 'excalibur';
 import { TiledResource } from '@excaliburjs/excalibur-tiled';
 import { Isle, Item, ItemKind, buildItem } from './models';
 import { Thing } from './actors/thing';
-import { GameConfig } from './game_config';
-import { SpriteSheet, Sprite } from 'excalibur';
+// import { GameConfig } from './game_config';
+// import { SpriteSheet, Sprite } from 'excalibur';
 
 // hmmmm (maybe more like a world-factory?)
 class World {
@@ -30,15 +30,13 @@ class World {
     }
 
     entityAt(x: number, y: number): Item {
-        let cell = this.tileMap.getCellByPoint(x, y); //interactionPos.x, interactionPos.y);
-        console.log("looking for entity at ", { x, y, cell });
-        if (cell && cell['__isle_item']) { //}.sprites.length > 1) {
+        let cell = this.tileMap.getCellByPoint(x, y);
+        // console.log("looking for entity at ", { x, y, cell });
+        if (cell && cell['__isle_item']) {
             let it: Item = cell['__isle_item'];
-            return it; //cell['__isle_item']; // sprites[1] };
-            //  // we need to build some kind of object model we can deref
-            //  // all we'll have is a spriteId...
+            return it;
         }
-        return null; // { nothing: 'to see here' };
+        return null;
     }
 
     _processTiledMap() {
@@ -140,12 +138,18 @@ class World {
                     let size = kind.size || 1;
                     let cellsToMark = [];
                     if (size > 1) {
+                        xOff = 16 * size; yOff = 16 * size;
                         for (const x of Array(size).keys()) {
                             for (const y of Array(size).keys()) {
-                                let cellToRemove = this.tileMap.getCellByIndex(index + x + y * this.tileMap.cols);
-                                console.log("REMOVE SPRITE FROM", {cellToRemove});
-                                cellToRemove.removeSprite(cellToRemove.sprites[1]);
-                                cellsToMark.push(cellToRemove);
+                                let cx = x, cy = y;
+                                let cellToRemove = this.tileMap.getCellByIndex(index + cx + (cy * this.tileMap.cols));
+                                if (cellToRemove.sprites[1]) {
+                                    //console.log("REMOVE SPRITE FROM", {x,y,cellToRemove});
+                                    cellToRemove.removeSprite(cellToRemove.sprites[1]);
+                                    cellsToMark.push(cellToRemove);
+                                } else {
+                                    // console.warn("NO SPRITE TO REMOVE FROM", { x, y, size });
+                                }
                             }
                         }
                     }
@@ -158,16 +162,18 @@ class World {
                         let newSprite: ex.Sprite = sheet.getSprite(spriteId)
                         thing.addDrawing(newSprite);
                     }
-                    thing['_cell'] = cell;
 
-                    // de-ref from sprite id
                     if (kind) { // model it!
-                        let theItem: Item = buildItem(kind, thing); // newSprite); //, tilesprite);
+                        let theItem: Item = buildItem(kind, thing);
                         this.island.items.push(theItem);
 
-                        cell['__isle_item'] = theItem;
+                        //cell['__isle_item'] = theItem;
+                        cellsToMark.push(cell);
                         if (cellsToMark.length) {
-                            cellsToMark.forEach(c => c['__isle_item'] = theItem);
+                            cellsToMark.forEach((c: ex.Cell) => {
+                                c['__isle_item'] = theItem
+                                //c.clearSprites();
+                            });
                         }
                         //console.log("created item", { theItem });
                     }

@@ -8,11 +8,13 @@ const alex = require('./images/alex.png')
 const greatPalm = require('./images/greatpalm.png')
 const palm = require('./images/palm.png')
 
-//const fineMist = require('./sounds/')
+const fineMist = require('./sounds/finemist.mp3')
+const science = require('./sounds/science.mp3')
 
 let mapName = 'solidity';
 
 let Resources = {
+    // images
     Sword: new ex.Texture(sword),
     Spritemap: new ex.Texture(spritemap), // SpriteSheet(spritemap)
     BasicSprites: new ex.Texture(basicSprites),
@@ -20,6 +22,10 @@ let Resources = {
     Map: new TiledResource(`map/${mapName}.json`),
     GreatPalm: new ex.Texture(greatPalm),
     Palm: new ex.Texture(palm),
+
+    // music
+    FineMist: new ex.Sound(fineMist),
+    Science: new ex.Sound(science)
 }
 
 Resources.Map.imagePathAccessor = (path, tileset) => {

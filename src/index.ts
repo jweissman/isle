@@ -5,23 +5,10 @@ import { Player } from './actors';
 import { Resources } from './resources';
 import { Game } from './game';
 
-// import { Isle } from './models';
-
 import { keyToDirection, Direction, mode } from './util';
-// import { TileMap } from 'excalibur';
 import { World } from './world';
 import { Thing } from "./actors/thing";
 import { GameConfig } from './game_config';
-
-const config: GameConfig = {
-  debugCells: false,
-  debugBoundingBoxes: false,
-  zoom: 4,
-  playerStart: { x: 24, y: 20 },
-  playerSpeed: 12.0,
-}
-
-ex.Physics.collisionPasses = 6;
 
 // Islands are either from before or for after humankind. (gd)
 
@@ -34,21 +21,24 @@ scratch, recreating, beginning anew. (gd)
 
 // An island doesn't stop being deserted simply because it is inhabited. (gd)
 
-// const island = new Isle();
+const config: GameConfig = {
+  debugCells: false,
+  debugBoundingBoxes: false,
+  zoom: 2,
+  playerStart: { x: 24, y: 20 },
+  playerSpeed: 7.3,
+}
 
-const game = new Game(800, 600);
 
-const mainMenu = new MainMenu();
-game.add('main-menu', mainMenu);
+const game = new Game(800, 600, config);
+
+// const mainMenu = new MainMenu();
+// game.add('main-menu', mainMenu);
 
 const levelOne = new LevelOne();
 
-const spritemap = new ex.SpriteSheet(Resources.Spritemap, 8, 8, 32, 32);
 const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
 const alexSprites = new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64);
-
-const tinyAlexSprite = basicSprites.getSprite(4); //spritemap.getSprite(7));
-//const alexSprite = alexSprites.getSprite(0); //Resources.Alex.asSprite(); //new ex.Sprite(Resources.Alex.);
 
 const startX = config.playerStart.x, startY = config.playerStart.y;
 const player = new Player(startX * 32, startY * 32, config, alexSprites);
@@ -61,7 +51,10 @@ const brand = new ex.Label('(welcome to isle)', 500, 500, 'Arial');
 levelOne.add(output);
 levelOne.add(brand);
 
+game.input.pointers.primary.on('scroll', (e) => { levelOne.camera.zoom(4); })
+
 game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
+  // check for current scene?
   let { key } = evt;
   if (key == ex.Input.Keys.E) {
     let interaction = player.interact();
@@ -111,7 +104,6 @@ game.add('wander', levelOne);
 
 
 game.start().then(() => {
-  game.goToScene('wander');
   let world = new World(Resources.Map, config.debugBoundingBoxes);
 
   let tileMap = world.tileMap;
@@ -137,6 +129,29 @@ game.start().then(() => {
       }
     });
   }
+
+  game.goToScene('wander');
+
+  //theme.play();
+  //theme.load().then(() => {
+
+  //  theme.play()
+  //}); //() => theme.play();
+  //if (theme.isLoaded) {
+  //  console.log("playing song...");
+  //  //debugger;
+  //  //theme.play(1.0);
+  //} else {
+  //  console.error("theme song not loaded?")
+  //  //throw new Error("theme song wasn't loaded?")
+  //}
+
+  // really should be an audio player
+  let theme = Resources.FineMist; //Science;
+  console.log('about to play music', { theme, isLoaded: theme.isLoaded() });
+  // wait a tiny bit for music to load??? (seems to work welll)
+  setTimeout(() => theme.play(0.125), 4000);
+
 
 });
 

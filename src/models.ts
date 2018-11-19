@@ -79,11 +79,24 @@ class Palm extends Item {
 }
 
 class GreatPalm extends Item {
-    constructor(kind,actor,state) {
-        super(kind,actor,state);
+    state: { hp: number } = { hp: 100 }
+    constructor(kind, actor, state) {
+        super(kind, actor, state);
         this.actor.addDrawing('palm', BasicSpriteMap.greatPalm);
         this.actor.setDrawing('palm');
         console.log("CREATE GREAT PALM!!!");
+    }
+
+    activate() {
+        if (this.state.hp > 0) {
+            this.state.hp -= 25;
+            return `once a seed (${this.state.hp}%)`
+        } else {
+            this.actor.kill();
+            // this.actor.actions.fade(0.5, 2000);
+            //setTimeout(() => this.actor.kill(), 2000);
+            return "timber";
+        }
     }
 }
 
