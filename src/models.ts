@@ -2,6 +2,7 @@ import * as ex from 'excalibur';
 import { Resources } from './resources';
 import { World } from './world';
 import { Cell } from 'excalibur';
+import { coinflip } from './util';
 
 //type Material = 'wood' | 'stone' | 'glass'; // | 'rope'
 
@@ -45,6 +46,7 @@ class Item {
 const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
 const greatPalm = Resources.GreatPalm.asSprite();
 const palm = Resources.Palm.asSprite();
+const campfire = Resources.Campfire.asSprite();
 
 //new ex.Sprite(Resources.GreatPalm.once)
 const BasicSpriteMap = {
@@ -52,6 +54,7 @@ const BasicSpriteMap = {
     chestOpen: basicSprites.getSprite(3),
     greatPalm, //: basicSprites.getSprite
     palm,
+    campfire,
 }
 
 
@@ -61,6 +64,7 @@ class Chest extends Item {
     initialize() {
         this.actor.addDrawing('closed', BasicSpriteMap.chestClosed);
         this.actor.addDrawing('open', BasicSpriteMap.chestOpen);
+        //this.actor.addDrawing();
     }
 
     activate() {
@@ -84,6 +88,14 @@ class Palm extends Item {
     }
 }
 
+class BigCampfire extends Item {
+    initialize() {
+        this.actor.addDrawing('fire', BasicSpriteMap.campfire);
+        this.actor.setDrawing('fire');
+        //this.actor.setDrawing('big')
+    }
+}
+
 //class WoodLogStack extends Item {}
 
 class GreatPalm extends Item {
@@ -100,20 +112,25 @@ class GreatPalm extends Item {
             this.state.hp -= 30;
             return message;
         } else {
-            let base: ex.Cell = //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
-            this.world.tileMap.getCellByIndex(
-                this.cell.index + 
-                  (this.kind.size/2) +
-                  ((this.kind.size-1) * this.world.tileMap.cols)
+            let baseCells: Array<ex.Cell> = [-2,-1,0,1,2].map((offset) => //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
+                this.world.tileMap.getCellByIndex(
+                    this.cell.index +
+                    (this.kind.size / 2) + offset +
+                    ((this.kind.size - 1) * this.world.tileMap.cols)
+                )
             );
             // cell.clearSprites();
 
             this.world.destroy(this);
-            let newThing = this.world.spawn(
-                this.world.itemKinds['WoodLogStack'],
-                base,
-            );
-            console.log("TIMBER", { base, newThing }); //, newThing });
+
+            baseCells.forEach(base => {
+                let logKind = coinflip() ? 'WoodLogStack' : 'WoodLog';
+                let newThing = this.world.spawn(
+                    this.world.itemKinds[logKind],
+                    base,
+                );
+                console.log("TIMBER", { base, newThing }); //, newThing });
+            });
             //this.actor.actions..fade(0.5, 2000);
             // setTimeout(() => this.world.destroy(this), 2000);
             return "timber";
@@ -125,6 +142,7 @@ const itemClasses = {
     Chest,
     Palm,
     GreatPalm,
+    BigCampfire,
     //Lumber
 };
 

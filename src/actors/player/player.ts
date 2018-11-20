@@ -51,13 +51,14 @@ export class Player extends ex.Actor {
   interact() {
     let pos = this.interactionPos();
     this.interacting = true;
-    let item = this._world.entityAt(pos.x, pos.y) ||
+    let entityAndCell = this._world.entityAt(pos.x, pos.y) ||
       this._world.entityAt(pos.x, pos.y+10) ||
       this._world.entityAt(pos.x, pos.y-10) ||
       this._world.entityAt(pos.x-10, pos.y) ||
       this._world.entityAt(pos.x+10, pos.y);
-    if (item) {
-      return this._world.interact(item);
+    if (entityAndCell) {
+      let { entity, cell } = entityAndCell;
+      return this._world.interact(entity, cell);
     }
   }
 

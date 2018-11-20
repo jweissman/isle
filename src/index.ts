@@ -26,25 +26,20 @@ const config: GameConfig = {
   debugBoundingBoxes: false,
   zoom: 2,
   playerStart: { x: 24, y: 20 },
-  playerSpeed: 8.5,
-  bgMusic: false
+  playerSpeed: 7.5,
+  bgMusic: true
 }
 
 
 const game = new Game(800, 600, config);
 
-// const mainMenu = new MainMenu();
-// game.add('main-menu', mainMenu);
-
 const levelOne = new LevelOne();
-const world = new World(config.debugBoundingBoxes, levelOne);
+const world = new World(levelOne, config);
 
-
-const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
-const alexSprites = new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64);
-
-const startX = config.playerStart.x, startY = config.playerStart.y;
-const player = new Player(startX * 32, startY * 32, config, alexSprites);
+//const alexSprites = new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64);
+//
+//const startX = config.playerStart.x, startY = config.playerStart.y;
+//const player = new Player(startX * 32, startY * 32, config, alexSprites);
 
 //player.addDrawing(alexSprite);
 
@@ -54,9 +49,9 @@ const brand = new ex.Label('(welcome to isle)', 500, 500, 'Arial');
 levelOne.add(output);
 levelOne.add(brand);
 
-game.input.pointers.primary.on('scroll', (e) => { levelOne.camera.zoom(4); })
-
 game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
+  let player = world.primaryCharacter();
+
   // check for current scene?
   let { key } = evt;
   if (key == ex.Input.Keys.E) {
@@ -79,6 +74,7 @@ game.input.keyboard.on('hold', (evt: ex.Input.KeyEvent) => {
   let { key } = evt;
   let direction : Direction = keyToDirection(key);
   if (direction) {
+    let player = world.primaryCharacter();
     player.move(direction);
   }
 })
@@ -88,15 +84,14 @@ game.input.keyboard.on('release', (evt: ex.Input.KeyEvent) => {
   let { key } = evt;
   let direction : Direction = keyToDirection(key);
   if (direction) {
+    let player = world.primaryCharacter();
     player.halt(); //direction);
     player.interacting = false;
   }
 });
 
-levelOne.add(player);
+//levelOne.add(player);
 
-levelOne.camera.strategy.lockToActor(player);
-levelOne.camera.zoom(config.zoom);
 
 // game.input.pointers.primary.on('move', (e: ex.Input.PointerEvent) => {
 //   console.log("POINTER MOVE", e.pos);
@@ -111,7 +106,7 @@ game.start().then(() => {
 
   let tileMap = world.tileMap;
   levelOne.addTileMap(tileMap);
-  player.wireWorld(world); //wireMap(tileMap);
+  //player.wireWorld(world); //wireMap(tileMap);
 
   //world.blockingActors.forEach((actor: Thing) => {
   //  //let y = actor['_cell'].y; // - 7;

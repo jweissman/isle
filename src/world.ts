@@ -2,42 +2,78 @@ import * as ex from 'excalibur';
 import { TiledResource } from '@excaliburjs/excalibur-tiled';
 import { Isle, Item, ItemKind, buildItem } from './models';
 import { Thing } from './actors/thing';
+import { Resources } from './resources';
+import { Player } from './actors';
+import { GameConfig } from './game_config';
 // import { GameConfig } from './game_config';
 // import { SpriteSheet, Sprite } from 'excalibur';
+
+type Entity = Item | Player
 
 // hmmmm (maybe more like a world-factory? [now def more world-ly...])
 class World {
     island: Isle
     tileMap: ex.TileMap
     itemKinds: { [key: string]: ItemKind }
+    playerCharacterMeta: { [name: string]: {
+        sprites: ex.SpriteSheet,
+        primary: boolean
+    }}
+    debugBoxes: boolean
     // blockingActors: Array<ex.Actor>
     // itemKindBySpriteId: { [spriteId: number]: ItemKind }
 
     constructor(
         //public mapResource: TiledResource,
-        public debugBoxes: boolean,
-        public scene: ex.Scene
-        //public config: GameConfig
+        //public debugBoxes: boolean,
+        public scene: ex.Scene,
+        public config: GameConfig
     ) {
         this.island = new Isle('sorna');
         this.itemKinds = {};
+        this.playerCharacterMeta = {
+            Alex: {
+                sprites: new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64),
+                primary: false
+            },
+            Miranda: {
+                sprites: new ex.SpriteSheet(Resources.Miranda, 4, 1, 32, 64),
+                primary: true
+            }
+        }
+        this.debugBoxes = config.debugBoundingBoxes;
         //this._processTiledMap();
     }
 
-    interact(it: Item): string {
-        console.log("WOULD INTERACT WITH ITEM", { it });
-        // it.activate();
-
-        let { name, description } = it.kind;
-        return it.activate() || description;
+    interact(it: Entity, cell: ex.Cell): string {
+        if (it instanceof Item) {
+            console.log("WOULD INTERACT WITH ITEM", { it });
+            let { name, description } = it.kind;
+            return it.activate() || description;
+        } else if (it instanceof Player) {
+            console.log("WOULD SWAP PLAYER CHARACTER!!!", {it});
+            cell['__isle_pc'] = this._primaryCharacter;
+            this._primaryCharacter.x = cell.x
+            this._primaryCharacter.y = cell.y-16
+            this._primaryCharacter.halt();
+            //cell.removeSprite(cell.sprites[1]);
+            // todo remove new pc from cell, add old pc TO that cell...
+            this.makePrimaryCharacter(it);
+            return "nice to see you again";
+        }
     }
 
-    entityAt(x: number, y: number): Item {
+    entityAt(x: number, y: number): { entity: Entity, cell: ex.Cell } {
         let cell = this.tileMap.getCellByPoint(x, y);
         // console.log("looking for entity at ", { x, y, cell });
-        if (cell && cell['__isle_item']) {
-            let it: Item = cell['__isle_item'];
-            return it;
+        if (cell) {
+            if (cell['__isle_item']) {
+                let it: Item = cell['__isle_item'];
+                return { entity: it, cell };
+            } else if (cell['__isle_pc']) {
+                let pc: Player = cell['__isle_pc'];
+                return { entity: pc, cell };
+            }
         }
         return null;
     }
@@ -59,9 +95,7 @@ class World {
         return true;
     }
 
-    // has to have a cell to attach item...
-    spawn(kind: ItemKind, cell: ex.Cell): Thing { //}, x: number = 0, y: number =0): Thing { //}, x: number, y: number): Thing {
-        //let obj = entityCreator(x,y,32,32);
+    spawn(kind: ItemKind, cell: ex.Cell): Thing {
         let { size } = kind;
         size = size || 1;
 
@@ -81,32 +115,46 @@ class World {
             for (const y of Array(size).keys()) {
                 let cellToMark = this.tileMap.getCellByIndex(cell.index + x + (y * this.tileMap.cols));
                 cellToMark['__isle_item'] = theItem;
-                //if (cellToRemove.sprites[1]) {
-                //    //console.log("REMOVE SPRITE FROM", {x,y,cellToRemove});
-                //    cellToRemove.removeSprite(cellToRemove.sprites[1]);
-                //    cellsToMark.push(cellToRemove);
-                //} else {
-                //    // console.warn("NO SPRITE TO REMOVE FROM", { x, y, size });
-                //}
             }
         }
 
-        // attach item to it???
-
-        //cell['__isle_item'] = theItem;
-        // cellsToMark.push(cell);
-        // if (cellsToMark.length) {
-        //     cellsToMark.forEach((c: ex.Cell) => {
-        //         c['__isle_item'] = theItem
-        //         //c.clearSprites();
-        //     });
-        // }
-
         this.scene.add(thing);
         thing.setZIndex(thing.computeZ());
-        console.log("SPAWN", { kind, thing });
+        // console.log(`SPAWN ${kind.name}`, { kind, thing });
         return thing;
-        //cell.x + xOff, cell.y + yOff, z, size, this.debugBoxes);
+    }
+
+    _primaryCharacter: Player
+    createPlayableCharacter(name: string, cell: ex.Cell) { // x: number, y: number) {
+        // lookup pcs by name???
+        let pcMeta = this.playerCharacterMeta[name];
+        if (pcMeta) {
+            let { x, y } = cell;
+            console.log("CREATE PC", { pcMeta });
+            const pc = new Player(x, y, this.config, pcMeta.sprites);
+            pc.wireWorld(this);
+            this.scene.add(pc);
+            cell['__isle_pc'] = pc;
+            if (pcMeta.primary) {
+                this.makePrimaryCharacter(pc);
+            } else {
+                console.log("PC is not primary", { pcMeta });
+            }
+        }
+        // add to scene
+        // if primary character, lock cam!
+    }
+
+    makePrimaryCharacter(pc: Player) {
+        console.log("CREATE PRIMARY PC!!!", { pc });
+        this._primaryCharacter = pc;
+        // fix cam!
+        this.scene.camera.strategy.lockToActor(pc);
+        this.scene.camera.zoom(this.config.zoom);
+    }
+
+    primaryCharacter() {
+        return this._primaryCharacter;
     }
 
     processTiledMap(mapResource: TiledResource) {
@@ -114,6 +162,9 @@ class World {
         let terrainMeta = {};
         let spriteTerrainById = {};
         let spriteCollisionById = {};
+
+        let characterById = {};
+
         let itemKindBySpriteId: { [spriteId: number]: ItemKind } = {};
 
         _mapRes.data.tilesets.forEach((ts) => {
@@ -166,19 +217,40 @@ class World {
                 itemKindBySpriteId = ts.tiles.reduce((acc, curr) => {
                     // debugger;
                     //console.log({ curr });
-                    if (curr.properties) {
+                    if (curr.properties && !curr.properties.some(prop => prop.name === 'character')) {
                         let currMeta = curr.properties.reduce((acc, curr) => {
                             let { name, value } = curr;
                             return (<any>Object).assign(acc, { [name]: value })
                         }, {});
                         return (<any>Object).assign(acc, { [curr.id]: currMeta });
                     } else {
-                        console.warn("no props for sprite with id", { curr });
+                        console.warn("no props for sprite with id (or maybe char?)", { curr });
                         // no props for this one?
                         return acc;
                     }
                 }, {})
                 //console.log({ itemKindBySpriteId })
+
+                
+            }
+
+            if (ts.tiles && ts.tiles.some(tile => tile.properties && tile.properties.some(prop => prop.name === 'character'))) {
+                // console.log('character somewhere!!');
+                characterById = ts.tiles.reduce((acc, curr) => {
+                    if (curr.properties && curr.properties.some(prop => prop.name === 'character')) {
+                        // console.log('char found!', { curr });
+                        let charProp = curr.properties.find(prop => prop.name === 'character');
+                        let name = charProp.value;
+                        return (<any>Object.assign(acc, {
+                            [curr.id]: name // charProp.value // curr.properties.character.name
+                        }));
+                    } else {
+                        return acc;
+                    }
+                }, {});
+                console.log({ characterById });
+            } else {
+                console.warn('no chars in tileset', { tiles: ts.tiles })
             }
         });
 
@@ -199,6 +271,17 @@ class World {
 
                     let { spriteSheetKey, spriteId } = cell.sprites[1];
                     const kind: ItemKind = itemKindBySpriteId[spriteId];
+                    if (!kind) {
+                        const characterName: string = characterById[spriteId];
+                        if (characterName) {
+                            console.log("WOULD CREATE PLAYABLE CHARACTER", {characterName, cell});
+                            cell.removeSprite(cell.sprites[1]); //hhclearSprites();
+                            this.createPlayableCharacter(characterName, cell); // cell.x, cell.y);
+                        } else {
+                            console.warn("CELL has sprite with no kind or character", { cell, itemKindBySpriteId, characterById });
+                        }
+                        return;
+                    } // hm
                     this.itemKinds[kind.name] = kind;
 
                     // we could get the image and attach it to an actor
@@ -206,11 +289,11 @@ class World {
                     //cell.removeSprite(cell.sprites[1]);
 
                     let sheet: ex.SpriteSheet = (<any>this.tileMap)._spriteSheets[spriteSheetKey];
-                    let xOff = 16, yOff = 16;
+                    // let xOff = 16, yOff = 16;
                     let size = kind.size || 1;
                     //let cellsToMark = [];
                     if (size > 1) {
-                        xOff = 16 * size; yOff = 16 * size;
+                        // xOff = 16 * size; yOff = 16 * size;
                         for (const x of Array(size).keys()) {
                             for (const y of Array(size).keys()) {
                                 let cx = x, cy = y;
@@ -226,36 +309,18 @@ class World {
                         }
                     }
 
-                    let z: number = (kind && kind.z) || 0;
+                    // let z: number = (kind && kind.z) || 0;
                     kind.collision = collision;
                     let newSprite: ex.Sprite = sheet.getSprite(spriteId)
                     kind.drawing = newSprite; 
 
-                    let thing: Thing = this.spawn(kind, cell); //, xOff, yOff); //, size);
-                    console.log('spawned', {thing});
-
-
-                    //if (kind) { // model it!
-                    //    let theItem: Item = buildItem(kind, thing, this);
-                    //    this.island.items.push(theItem);
-
-                    //    //cell['__isle_item'] = theItem;
-                    //    cellsToMark.push(cell);
-                    //    if (cellsToMark.length) {
-                    //        cellsToMark.forEach((c: ex.Cell) => {
-                    //            c['__isle_item'] = theItem
-                    //            //c.clearSprites();
-                    //        });
-                    //    }
-                    //    //console.log("created item", { theItem });
-                    //}
-
-                    // this.blockingActors.push(thing);
+                    // let thing: Thing = 
+                    this.spawn(kind, cell);
                 }
             }
         });
 
-        console.log({ itemKinds: this.itemKinds });
+        // console.log({ itemKinds: this.itemKinds });
     }
 
 }

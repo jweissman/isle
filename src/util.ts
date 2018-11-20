@@ -1,5 +1,8 @@
 import * as ex from 'excalibur';
 
+// tiny probability handler...
+const coinflip = () => Math.random() > 0.5
+
 // restrain a value between a min and a max
 const clamp = (min: number, max: number) => (val: number) => {
   let clamped = Math.min(val, max);
@@ -92,5 +95,6 @@ export {
   addScalarToVec,
   dirFromVec,
   oppositeWay,
-  mode
+  mode,
+  coinflip
 };
