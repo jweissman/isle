@@ -11,9 +11,10 @@ export class Player extends ex.Actor {
   speed: number
   facing: Direction
   _world: World
-  alex: { [key: string]: ex.Sprite }
+  sprites: { [key: string]: ex.Sprite }
 
   constructor(
+    public name: string,
     public x: number,
     public y: number,
     protected config: GameConfig,
@@ -21,29 +22,24 @@ export class Player extends ex.Actor {
   ) {
     super(x, y, 32, 64);
 
-    //this.setWidth(24);
-    //this.setHeight(20);
     this.collisionArea.body.useCircleCollision(6, new ex.Vector(0, 22));
-    //this.collisionArea.pos.y = 32;
-
     this.color = new ex.Color(255, 255, 255);
 
     this.collisionType = ex.CollisionType.Active;
-    this.speed = config.playerSpeed; // cells/sec
-    //this.facing = 'down';
+    this.speed = config.playerSpeed;
     this.interacting = false;
 
-    this.alex = {
-      'down': spriteSheet.getSprite(0),
-      'up': spriteSheet.getSprite(1),
-      'left': spriteSheet.getSprite(3),
+    this.sprites = {
+      'down':  spriteSheet.getSprite(0),
+      'up':    spriteSheet.getSprite(1),
       'right': spriteSheet.getSprite(2),
+      'left':  spriteSheet.getSprite(3),
     }
+
 
     // set facing + init sprite
     this.move('down');
     this.halt();
-    this.on('precollision', this.halt);
   }
 
   wireWorld = (world: World) => { this._world = world; }
@@ -106,7 +102,7 @@ export class Player extends ex.Actor {
   }
 
   update(engine, delta) {
-    this.currentDrawing = this.alex[this.facing];
+    this.currentDrawing = this.sprites[this.facing];
     super.update(engine, delta);
     this.setZIndex(this.computeZ());
     //console.log({z: this.getZIndex()})

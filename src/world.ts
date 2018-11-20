@@ -52,14 +52,17 @@ class World {
             return it.activate() || description;
         } else if (it instanceof Player) {
             console.log("WOULD SWAP PLAYER CHARACTER!!!", {it});
-            cell['__isle_pc'] = this._primaryCharacter;
-            this._primaryCharacter.x = cell.x
-            this._primaryCharacter.y = cell.y-16
-            this._primaryCharacter.halt();
+            let currentPc = this._primaryCharacter;
+            let message = `nice to see you again, ${currentPc.name}`;
+            cell['__isle_pc'] = currentPc;
+            currentPc.x = cell.x
+            currentPc.y = cell.y-16
+            currentPc.move('down');
+            currentPc.halt();
             //cell.removeSprite(cell.sprites[1]);
             // todo remove new pc from cell, add old pc TO that cell...
             this.makePrimaryCharacter(it);
-            return "nice to see you again";
+            return message;
         }
     }
 
@@ -126,12 +129,11 @@ class World {
 
     _primaryCharacter: Player
     createPlayableCharacter(name: string, cell: ex.Cell) { // x: number, y: number) {
-        // lookup pcs by name???
         let pcMeta = this.playerCharacterMeta[name];
         if (pcMeta) {
             let { x, y } = cell;
             console.log("CREATE PC", { pcMeta });
-            const pc = new Player(x, y, this.config, pcMeta.sprites);
+            const pc = new Player(name, x, y, this.config, pcMeta.sprites);
             pc.wireWorld(this);
             this.scene.add(pc);
             cell['__isle_pc'] = pc;
@@ -141,13 +143,14 @@ class World {
                 console.log("PC is not primary", { pcMeta });
             }
         }
-        // add to scene
-        // if primary character, lock cam!
     }
 
     makePrimaryCharacter(pc: Player) {
         console.log("CREATE PRIMARY PC!!!", { pc });
         this._primaryCharacter = pc;
+        pc.move('down');
+        pc.halt();
+        //pc.facing = 'down';
         // fix cam!
         this.scene.camera.strategy.lockToActor(pc);
         this.scene.camera.zoom(this.config.zoom);
@@ -270,12 +273,12 @@ class World {
                     // better yet: spawn an entity
 
                     let { spriteSheetKey, spriteId } = cell.sprites[1];
+                    cell.removeSprite(cell.sprites[1]); //hhclearSprites();
                     const kind: ItemKind = itemKindBySpriteId[spriteId];
                     if (!kind) {
                         const characterName: string = characterById[spriteId];
                         if (characterName) {
                             console.log("WOULD CREATE PLAYABLE CHARACTER", {characterName, cell});
-                            cell.removeSprite(cell.sprites[1]); //hhclearSprites();
                             this.createPlayableCharacter(characterName, cell); // cell.x, cell.y);
                         } else {
                             console.warn("CELL has sprite with no kind or character", { cell, itemKindBySpriteId, characterById });

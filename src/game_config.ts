@@ -3,7 +3,9 @@ interface GameConfig {
   debugBoundingBoxes: boolean
   zoom: number,
 
-  playerStart: { x: number, y: number },
+  // now derived from char pos on map!!
+  // playerStart: { x: number, y: number },
+
   playerSpeed: number,
 
   bgMusic: boolean,

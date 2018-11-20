@@ -9,6 +9,7 @@ import { keyToDirection, Direction, mode } from './util';
 import { World } from './world';
 import { Thing } from "./actors/thing";
 import { GameConfig } from './game_config';
+import { GamepadAxisEvent, UIActor } from 'excalibur';
 
 // Islands are either from before or for after humankind. (gd)
 
@@ -21,33 +22,83 @@ scratch, recreating, beginning anew. (gd)
 
 // An island doesn't stop being deserted simply because it is inhabited. (gd)
 
+//class Hud extends ex.UIActor {
+//  game: Game
+//  // build ui elements? respond to events?
+//}
+
+// take input commands, route to world/player actions?
+// class Gamespace {
+//   world: World
+//   //hud: Hud
+
+//   handleInteract() {
+//     let player = this.getPlayer();
+//     player.interact();
+//   }
+
+//   move(direction) {
+
+//   }
+
+//   // does this even work???
+//   getPlayer = this.world.primaryCharacter
+// }
+
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 2,
-  playerStart: { x: 24, y: 20 },
-  playerSpeed: 7.5,
+  zoom: 3,
+  playerSpeed: 7,
   bgMusic: true
 }
-
 
 const game = new Game(800, 600, config);
 
 const levelOne = new LevelOne();
 const world = new World(levelOne, config);
 
-//const alexSprites = new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64);
+const hud = new ex.UIActor(0,0,game.canvasWidth, game.canvasHeight);
+
+const output = new ex.Label(
+  '(press E to interact)',
+  game.canvasWidth/2,
+  game.canvasHeight - 40,
+  'Arial'
+);
+output.color = ex.Color.White;
+output.fontSize = 48
+output.setWidth(game.canvasWidth);
+output.textAlign = ex.TextAlign.Center;
+
+const brand = new ex.Label('I S L E', 10, 50, 'Arial');
+brand.color = ex.Color.Azure;
+brand.fontSize=24
+const inventory = new ex.Label('inventory: empty', game.canvasWidth-300,40, 'Arial')
+inventory.color = ex.Color.Green;
+inventory.fontSize=24
+hud.add(output);
+hud.add(brand);
+//hud.add(inventory);
+levelOne.add(hud);
+
+
+//game.gamepads.on('connect', (ce: ex.Input.GamepadConnectEvent) => {
+//  //var newPlayer = CreateNewPlayer(); // pseudo-code for new player logic on gamepad connection
+//  console.log('Gamepad connected', ce);
+//  ce.gamepad.on('button', (be: ex.GamepadButtonEvent) => {
+//    if (be.button === ex.Input.Buttons.Face1) {
+//      newPlayer.jump();
+//    }
+//  });
 //
-//const startX = config.playerStart.x, startY = config.playerStart.y;
-//const player = new Player(startX * 32, startY * 32, config, alexSprites);
-
-//player.addDrawing(alexSprite);
-
-const output = new ex.Label('(welcome to isle)', 500, 500, 'Arial');
-//output.
-const brand = new ex.Label('(welcome to isle)', 500, 500, 'Arial');
-levelOne.add(output);
-levelOne.add(brand);
+//  ce.gamepad.on('axis', (ae: ex.GamepadAxisEvent) => {
+//    if (ae.axis === ex.Input.Axis.LeftStickX && ae.value > 0.5) {
+//      newPlayer.moveRight();
+//    }
+//  });
+//});
+ 
 
 game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
   let player = world.primaryCharacter();
@@ -57,11 +108,10 @@ game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
   if (key == ex.Input.Keys.E) {
     let interaction = player.interact();
     if (interaction) {
-      output.x = levelOne.camera.x;
-      output.y = levelOne.camera.y;
       output.text = interaction;
-      output.color = ex.Color.White;
-      output.fontSize = 24;
+      output.opacity = 1;
+      output.actions.clearActions();
+      output.actions.fade(0, 2000);
     }
   } else {
     // assume we're trying to move
@@ -90,12 +140,7 @@ game.input.keyboard.on('release', (evt: ex.Input.KeyEvent) => {
   }
 });
 
-//levelOne.add(player);
 
-
-// game.input.pointers.primary.on('move', (e: ex.Input.PointerEvent) => {
-//   console.log("POINTER MOVE", e.pos);
-// });
 
 
 game.add('wander', levelOne);
@@ -106,15 +151,8 @@ game.start().then(() => {
 
   let tileMap = world.tileMap;
   levelOne.addTileMap(tileMap);
-  //player.wireWorld(world); //wireMap(tileMap);
 
-  //world.blockingActors.forEach((actor: Thing) => {
-  //  //let y = actor['_cell'].y; // - 7;
-  //  //console.log("would set z to", {y, currentZeD: actor.getZIndex()});
-  //  levelOne.add(actor);
-  //  actor.setZIndex(actor.computeZ());
-  //});
-  output.setZIndex(1000);
+  //output.setZIndex(1000);
 
   if (config.debugCells) {
     let lastViewedCell = null;
@@ -130,19 +168,6 @@ game.start().then(() => {
 
   game.goToScene('wander');
 
-  //theme.play();
-  //theme.load().then(() => {
-
-  //  theme.play()
-  //}); //() => theme.play();
-  //if (theme.isLoaded) {
-  //  console.log("playing song...");
-  //  //debugger;
-  //  //theme.play(1.0);
-  //} else {
-  //  console.error("theme song not loaded?")
-  //  //throw new Error("theme song wasn't loaded?")
-  //}
 
   // really should be an audio player
   if (config.bgMusic) {
