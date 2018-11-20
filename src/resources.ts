@@ -13,7 +13,7 @@ const palm = require('./images/palm.png')
 const campfire = require('./images/campfire.png')
 
 const fineMist = require('./sounds/finemist.mp3')
-const science = require('./sounds/science.mp3')
+// const science = require('./sounds/science.mp3')
 
 let mapName = 'solidity';
 
@@ -32,7 +32,7 @@ let Resources = {
 
     // music
     FineMist: new ex.Sound(fineMist),
-    Science: new ex.Sound(science)
+    // Science: new ex.Sound(science)
 }
 
 Resources.Map.imagePathAccessor = (path, tileset) => {

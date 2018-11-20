@@ -23,7 +23,7 @@ const config: GameConfig = {
   debugBoundingBoxes: false,
   zoom: 2,
   playerSpeed: 7,
-  bgMusic: false
+  bgMusic: true
 }
 
 const game = new Game(800, 600, config);
