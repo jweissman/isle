@@ -1,8 +1,8 @@
 import * as ex from 'excalibur';
-import { Resources } from './resources';
-import { World } from './world';
+import { World, Material } from './world';
 import { Cell } from 'excalibur';
 import { coinflip } from './util';
+import { BasicSpriteMap } from './basic_sprites';
 
 //type Material = 'wood' | 'stone' | 'glass'; // | 'rope'
 
@@ -43,21 +43,6 @@ class Item {
     }
 }
 
-const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
-const greatPalm = Resources.GreatPalm.asSprite();
-const palm = Resources.Palm.asSprite();
-const campfire = Resources.Campfire.asSprite();
-
-//new ex.Sprite(Resources.GreatPalm.once)
-const BasicSpriteMap = {
-    chestClosed: basicSprites.getSprite(2),
-    chestOpen: basicSprites.getSprite(3),
-    greatPalm, //: basicSprites.getSprite
-    palm,
-    campfire,
-}
-
-
 class Chest extends Item {
     state: { open: boolean } = { open: false }
 
@@ -96,7 +81,19 @@ class BigCampfire extends Item {
     }
 }
 
-//class WoodLogStack extends Item {}
+class WoodLog extends Item {
+  activate() {
+      this.world.collect(this, Material.Wood);
+      return this.kind.description;
+  }
+}
+
+class WoodLogStack extends Item {
+    activate() {
+        this.world.collect(this, Material.Wood, 3);
+        return this.kind.description;
+    }
+}
 
 class GreatPalm extends Item {
     state: { hp: number } = { hp: 100 }
@@ -109,7 +106,8 @@ class GreatPalm extends Item {
     activate() {
         if (this.state.hp > 0) {
             const message: string = `once a seed (${this.state.hp}%)`
-            this.state.hp -= 30;
+            let damage = this.world._primaryCharacter.equipped ? 30 : 3;
+            this.state.hp -= damage;
             return message;
         } else {
             let baseCells: Array<ex.Cell> = [-2,-1,0,1,2].map((offset) => //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
@@ -119,22 +117,27 @@ class GreatPalm extends Item {
                     ((this.kind.size - 1) * this.world.tileMap.cols)
                 )
             );
-            // cell.clearSprites();
 
             this.world.destroy(this);
 
             baseCells.forEach(base => {
                 let logKind = coinflip() ? 'WoodLogStack' : 'WoodLog';
-                let newThing = this.world.spawn(
+
+                this.world.spawn(
                     this.world.itemKinds[logKind],
                     base,
                 );
-                console.log("TIMBER", { base, newThing }); //, newThing });
             });
-            //this.actor.actions..fade(0.5, 2000);
-            // setTimeout(() => this.world.destroy(this), 2000);
             return "timber";
         }
+    }
+}
+
+class Handaxe extends Item {
+    activate() {
+        this.world.equip(this);
+        this.world.destroy(this);
+        return "chop chop";
     }
 }
 
@@ -143,12 +146,13 @@ const itemClasses = {
     Palm,
     GreatPalm,
     BigCampfire,
-    //Lumber
+    WoodLog,
+    WoodLogStack,
+    Handaxe
 };
 
 const buildItem = (kind: ItemKind, actor: ex.Actor, cell: Cell, world: World): Item => {
     if (itemClasses[kind.name]) {
-        //itemClasses[kind.name].sprites[state] = sprite; //can i assign to 'static' members like that??
         return new itemClasses[kind.name](kind, actor, cell, world);
     } else {
         return new Item(kind, actor, cell, world);

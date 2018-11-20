@@ -5,10 +5,19 @@ import { Thing } from './actors/thing';
 import { Resources } from './resources';
 import { Player } from './actors';
 import { GameConfig } from './game_config';
+import { Hud } from './actors/hud';
 // import { GameConfig } from './game_config';
 // import { SpriteSheet, Sprite } from 'excalibur';
 
 type Entity = Item | Player
+
+export enum Material {
+    Wood = 'wood',
+    Stone = 'stone',
+    // Strand, Ivy, Thread, Rope = 'rope'
+}
+
+type Stocks = { [key in Material]: number }
 
 // hmmmm (maybe more like a world-factory? [now def more world-ly...])
 class World {
@@ -20,6 +29,9 @@ class World {
         primary: boolean
     }}
     debugBoxes: boolean
+
+    stocks: Stocks
+
     // blockingActors: Array<ex.Actor>
     // itemKindBySpriteId: { [spriteId: number]: ItemKind }
 
@@ -27,6 +39,7 @@ class World {
         //public mapResource: TiledResource,
         //public debugBoxes: boolean,
         public scene: ex.Scene,
+        public hud: Hud,
         public config: GameConfig
     ) {
         this.island = new Isle('sorna');
@@ -43,15 +56,34 @@ class World {
         }
         this.debugBoxes = config.debugBoundingBoxes;
         //this._processTiledMap();
+
+        this.stocks = {
+            wood: 0,
+            stone: 0,
+        }
     }
+
+    equip(it: Item) {
+        this._primaryCharacter.equipped = it;
+    }
+
+    collect(it: Item, material: Material, count: number = 1) {
+      console.log("WOULD COLLECT ITEM", { it, material, count });
+      this.destroy(it);
+      this.stocks[material] += count;
+      this.hud.updateInventory(this.stocks);
+      console.log("AFTER COLLECT ITEM", { it, material, count, stocks: this.stocks });
+    }
+    // need to remove it from the cell...
+    //
 
     interact(it: Entity, cell: ex.Cell): string {
         if (it instanceof Item) {
-            console.log("WOULD INTERACT WITH ITEM", { it });
+            // console.log("WOULD INTERACT WITH ITEM", { it });
             let { name, description } = it.kind;
             return it.activate() || description;
         } else if (it instanceof Player) {
-            console.log("WOULD SWAP PLAYER CHARACTER!!!", {it});
+            // console.log("WOULD SWAP PLAYER CHARACTER!!!", {it});
             let currentPc = this._primaryCharacter;
             let message = `nice to see you again, ${currentPc.name}`;
             cell['__isle_pc'] = currentPc;

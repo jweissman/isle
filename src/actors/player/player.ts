@@ -4,9 +4,11 @@ import { Direction, oppositeWay, addScalarToVec, dirFromVec } from '../../util';
 import { Vector } from 'excalibur';
 import { World } from '../../world';
 import { GameConfig } from '../../game_config';
+import { Item } from '../../models';
 
 export class Player extends ex.Actor {
   interacting: boolean
+  equipped: Item
 
   speed: number
   facing: Direction
@@ -71,6 +73,13 @@ export class Player extends ex.Actor {
 
   draw(ctx: CanvasRenderingContext2D, engine) {
     super.draw(ctx, engine);
+
+    if (this.equipped) {
+      let littleDrawing = this.equipped.kind.drawing.clone()
+      littleDrawing.scale = new ex.Vector(0.5, 0.5)
+      littleDrawing.draw(ctx, this.pos.x, this.pos.y)
+    }
+
     if (this.config.debugBoundingBoxes) {
       this.collisionArea.debugDraw(ctx, ex.Color.Chartreuse);
       if (this.interacting) {
