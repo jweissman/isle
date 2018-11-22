@@ -75,7 +75,7 @@ class Palm extends Item {
 
 class BigCampfire extends Item {
     initialize() {
-        this.actor.addDrawing('fire', BasicSpriteMap.campfire);
+        this.actor.addDrawing('fire', BasicSpriteMap.BigCampfire);
         this.actor.setDrawing('fire');
         //this.actor.setDrawing('big')
     }

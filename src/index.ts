@@ -3,9 +3,11 @@ import { LevelOne } from './scenes/level-one/level-one';
 import { Resources } from './resources';
 import { Game } from './game';
 import { keyToDirection, Direction, mode } from './util';
-import { World } from './world';
+import { World, Material } from './world';
 import { GameConfig } from './game_config';
 import { Hud } from './actors/hud';
+import { BasicSpriteMap } from './basic_sprites';
+import { TileMap } from 'excalibur';
 
 // Islands are either from before or for after humankind. (gd)
 
@@ -22,7 +24,7 @@ const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
   zoom: 2,
-  playerSpeed: 7,
+  playerSpeed: 5,
   bgMusic: true
 }
 
@@ -32,7 +34,8 @@ const levelOne = new LevelOne();
 const hud = new Hud(game);
 levelOne.add(hud);
 
-const world = new World(levelOne, hud, config);
+const world = new World(levelOne, hud, config, game);
+levelOne.wireWorld(world); // hmmm
 
 game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
     // check for current scene?
@@ -40,10 +43,17 @@ game.input.keyboard.on('press', (evt: ex.Input.KeyEvent) => {
     let player = world.primaryCharacter();
 
     let { key } = evt;
-    if (key == ex.Input.Keys.E) {
+    if (key === ex.Input.Keys.E) {
       let interaction = player.interact();
       if (interaction) {
         hud.describe(interaction);
+      }
+    } else if (key === ex.Input.Keys.C) {
+      if (!world.crafting) {
+        hud.describe('would craft!');
+        world.enterCraftMode('BigCampfire', 0,0);
+      } else {
+        world.crafting = false;
       }
     } else {
       // assume we're trying to move
@@ -91,4 +101,37 @@ game.start().then(() => {
       theme.play(0.2) //1.0)
     }, 3000);
   }
+
+  game.input.pointers.primary.on('move', (e: ex.Input.PointerEvent) => {
+    // console.log("MOUSE MOVE");
+    let { pos } = e;
+    if (world && world.crafting) {
+      // console.log("MOUSE MOVE while CRAFTING...");
+      let cell = world.tileMap.getCellByPoint(pos.x, pos.y);
+      let x = cell.x, y = cell.y;
+      let screenPos = game.worldToScreenCoordinates(new ex.Vector(x,y));
+      //world.craftingItem = 'campfire';
+      world.craftingAt = screenPos;
+      //console.log("draw fire sprite at", {x,y});
+      //fireSprite.draw(game.ctx, x, y); //cell.x * 32, cell.y * 32);
+    }
+  });
+
+  game.input.pointers.primary.on('down', (e: ex.Input.PointerEvent) => {
+    let { pos } = e;
+    console.log("CLICK", { pos });
+    if (world && world.crafting) { // && world.ableToCraft()) {
+      console.log("CLICK while CRAFTING");
+      hud.describe(`would build ${world.craftingItem}!`);
+      let kind = world.itemKinds[world.craftingItem];
+
+      let cell = world.tileMap.getCellByPoint(pos.x, pos.y);
+      //debugger;
+      world.spawn(kind, cell);
+      world.crafting = false;
+      world.debit(Material.Wood);
+      //world.primaryCharacter().a
+    }
+  })
+
 });

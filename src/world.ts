@@ -30,6 +30,11 @@ class World {
     }}
     debugBoxes: boolean
 
+    // craft state...
+    crafting: boolean
+    craftingItem: string
+    craftingAt: { x: number, y: number }
+
     stocks: Stocks
 
     // blockingActors: Array<ex.Actor>
@@ -40,18 +45,19 @@ class World {
         //public debugBoxes: boolean,
         public scene: ex.Scene,
         public hud: Hud,
-        public config: GameConfig
+        public config: GameConfig,
+        protected engine: ex.Engine
     ) {
         this.island = new Isle('sorna');
         this.itemKinds = {};
         this.playerCharacterMeta = {
             Alex: {
-                sprites: new ex.SpriteSheet(Resources.Alex, 4, 1, 32, 64),
-                primary: false
+                sprites: new ex.SpriteSheet(Resources.Alex, 4, 7, 32, 64),
+                primary: true
             },
             Miranda: {
                 sprites: new ex.SpriteSheet(Resources.Miranda, 4, 1, 32, 64),
-                primary: true
+                primary: false
             }
         }
         this.debugBoxes = config.debugBoundingBoxes;
@@ -61,6 +67,12 @@ class World {
             wood: 0,
             stone: 0,
         }
+    }
+
+    enterCraftMode(itemName: string, x: number, y: number) {
+        this.crafting = true;
+        this.craftingItem = itemName; // 'Campfire';
+        this.craftingAt = { x, y };
     }
 
     equip(it: Item) {
@@ -74,7 +86,13 @@ class World {
       this.hud.updateInventory(this.stocks);
       console.log("AFTER COLLECT ITEM", { it, material, count, stocks: this.stocks });
     }
-    // need to remove it from the cell...
+
+    debit(material: Material, count: number = 1) {
+        this.stocks[material] -= count;
+        this.hud.updateInventory(this.stocks);
+    }
+
+    // need to remove it from the cell...?
     //
 
     interact(it: Entity, cell: ex.Cell): string {
@@ -165,7 +183,7 @@ class World {
         if (pcMeta) {
             let { x, y } = cell;
             console.log("CREATE PC", { pcMeta });
-            const pc = new Player(name, x, y, this.config, pcMeta.sprites);
+            const pc = new Player(name, x, y, this.config, pcMeta.sprites, this.engine);
             pc.wireWorld(this);
             this.scene.add(pc);
             cell['__isle_pc'] = pc;

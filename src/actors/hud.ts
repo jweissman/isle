@@ -13,30 +13,65 @@ const inventorySprites: { [key in Material]: ex.Sprite } = {
     [Material.Stone]: BasicSpriteMap.stone
 }
 
-class StockLine extends ex.UIActor {
+class StockLine { // extends ex.UIActor {
     label: ex.Label
     constructor(public material: Material, public count: number, public yOff: number) {
-        super(0, yOff * 30, 200, 20)
+        //super(0, yOff * 30, 200, 20)
 
-        this.label = new ex.Label(`${material} x ${count}`, this.x, this.y, 'Arial')
+        this.label = new ex.Label(`${material} x ${count}`, 0,0, 'Arial')
         this.label.fontSize = 12
         this.label.color = ex.Color.White
-        this.add(this.label)
+        //this.add(this.label)
     }
     
-    draw(ctx, delta) {
-        super.draw(ctx, delta);
+    draw(ctx, x: number, y: number) { // delta) {
+        //super.draw(ctx, delta);
         let sprite = inventorySprites[this.material].clone();
         sprite.scale = new ex.Vector(0.5, 0.5)
-        sprite.draw(ctx, this.x, this.y)
+        sprite.draw(ctx, x, y); // - 16, y - 16)
+
+        this.label.text = `${this.material} x ${this.count}`;
+        this.label.x = x + 24;
+        this.label.y = y + 16;
+        this.label.draw(ctx, 0);
     }
 }
 
-// yeah we need an inventory ui actor layer :)
+class Inventory extends ex.UIActor {
+    lineItems: { [key in Material]: StockLine }
+
+    constructor(public x: number, public y: number) {
+        super(x,y,100,300);
+
+        this.lineItems = {
+            [Material.Wood]: new StockLine(Material.Wood, 0, 0),
+            [Material.Stone]: new StockLine(Material.Stone, 0, 1)
+        }
+
+        //Object.keys(this.lineItems).forEach(material => this.add(this.lineItems[material]));
+    }
+
+    setStock(stocks: {[key: string]: number}) {
+        Object.keys(stocks).forEach((material: Material) => {
+            this.lineItems[material].count = stocks[material]
+        });
+
+        // console.log("AFTER SET STOCKS", { items: this.lineItems });
+    }
+
+    draw(ctx, delta) {
+        super.draw(ctx, delta);
+        Object.keys(this.lineItems).forEach(
+            (material: Material, index: number) =>
+                this.lineItems[material].draw(ctx, this.x, this.y + index * 32)
+        );
+    }
+}
+
 
 class Hud extends ex.UIActor {
     output: ex.Label
-    inventory: ex.UIActor
+    inventory: Inventory //ex.UIActor
 
     constructor(game: Game) {
         super(0, 0, game.canvasWidth, game.canvasHeight);
@@ -59,10 +94,7 @@ class Hud extends ex.UIActor {
         brand.color = ex.Color.Azure;
         brand.fontSize = 24
 
-        // this.inventory = new ex.Label('(inventory)', game.canvasWidth - 300, 40, 'Arial')
-        // this.inventory.color = ex.Color.Green;
-        // this.inventory.fontSize = 24
-        this.inventory = new ex.UIActor(game.canvasWidth - 300, 50, 300, 500) // .text = 'a bunch of stuff';
+        this.inventory = new Inventory(game.canvasWidth - 300, 50) // .text = 'a bunch of stuff';
 
         this.add(this.output);
         this.add(brand);
@@ -75,20 +107,9 @@ class Hud extends ex.UIActor {
     }
 
     updateInventory(stocks: {[key: string]: number}) {
-        let stockLines: StockLine[] = Object.keys(stocks).map(
-            (material: Material, index) => new StockLine(material, stocks[material], index) //`${material} x${stocks[material]}`
-        );
-        stockLines.forEach(line => this.inventory.add(line));
-        console.log("update inventory", { stocks, stockLines });
-        this.inventory.children.forEach(child => this.inventory.remove(child))
-        
-        stockLines.forEach(line => this.inventory.add(line))
-        // rebuild??
+        console.log("UPDATE INV", { stocks });
+        this.inventory.setStock(stocks);
     }
-
-    //update(engine, delta) {
-    //    //super(engine, delta);
-    //}
 
     describe(description) {
       this.output.text = description;

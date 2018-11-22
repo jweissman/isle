@@ -5,7 +5,7 @@ import TiledResource from '@excaliburjs/excalibur-tiled';
 const spritemap = require('./images/spritemap.png')
 const basicSprites = require('./images/basic-sprites.png')
 
-const alex = require('./images/alex.png')
+const alex = require('./images/alex-sprites.png')
 const miranda = require('./images/miranda.png')
 
 const greatPalm = require('./images/greatpalm.png')

@@ -14,13 +14,15 @@ export class Player extends ex.Actor {
   facing: Direction
   _world: World
   sprites: { [key: string]: ex.Sprite }
+  walkSprites: { [key: string]: ex.Animation }
 
   constructor(
     public name: string,
     public x: number,
     public y: number,
     protected config: GameConfig,
-    protected spriteSheet: ex.SpriteSheet 
+    protected spriteSheet: ex.SpriteSheet,
+    private engine: ex.Engine,
   ) {
     super(x, y, 32, 64);
 
@@ -38,6 +40,43 @@ export class Player extends ex.Actor {
       'left':  spriteSheet.getSprite(3),
     }
 
+    let walkFrames = [1,2,3,4,5,6].map(x => x * 4)
+    let animRate = 125;
+    this.walkSprites = {
+      'down': spriteSheet.getAnimationByIndices(
+        engine,
+        walkFrames, // [4, 8, 12, 16, 20, 24], // 1, 2, 3, 4],
+        animRate
+      ),
+      'up': spriteSheet.getAnimationByIndices(
+        engine,
+        walkFrames.map(x => x+1),
+        animRate
+      ),
+      'right': spriteSheet.getAnimationByIndices(
+        engine,
+        walkFrames.map(x => x+2),
+        animRate
+      ),
+      'left': spriteSheet.getAnimationByIndices(
+        engine,
+        walkFrames.map(x => x+3),
+        animRate
+      )
+    }
+
+    // assemble indexes for walking...
+    //let directions = ['down', 'up', 'right', 'left'];
+    //directions.forEach((dir: Direction, column: number) => {
+    //  //let dirIndices: number[] = [0,1,2,3,4,5].map((index: number) => {
+    //  //  return 4 + index*4 + column
+    //  //})
+    //  this.sprites['walk'][dir] = spriteSheet.getAnimationByIndices(
+    //    engine,
+    //    [1,2,3,4],
+    //    8
+    //  )
+    //})
 
     // set facing + init sprite
     this.move('down');
@@ -111,7 +150,11 @@ export class Player extends ex.Actor {
   }
 
   update(engine, delta) {
-    this.currentDrawing = this.sprites[this.facing];
+    this.currentDrawing = this.walkSprites[this.facing];
+    if (Math.abs(this.vel.x + this.vel.y) < this.speed) {
+      this.halt();
+      this.currentDrawing = this.sprites[this.facing];
+    }
     super.update(engine, delta);
     this.setZIndex(this.computeZ());
     //console.log({z: this.getZIndex()})

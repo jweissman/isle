@@ -4,7 +4,8 @@ import { Resources } from './resources';
 const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
 const greatPalm = Resources.GreatPalm.asSprite();
 const palm = Resources.Palm.asSprite();
-const campfire = Resources.Campfire.asSprite();
+
+const BigCampfire = Resources.Campfire.asSprite();
 
 //new ex.Sprite(Resources.GreatPalm.once)
 export const BasicSpriteMap = {
@@ -12,7 +13,9 @@ export const BasicSpriteMap = {
     chestOpen: basicSprites.getSprite(3),
     greatPalm,
     palm,
-    campfire,
+
+    // also used for crafting, so needs to be capitalized/match item name
+    BigCampfire,
 
     // materials...
     wood: basicSprites.getSprite(9),
