@@ -102,7 +102,7 @@ class World {
             let message = `nice to see you again, ${currentPc.name}`;
             cell['__isle_pc'] = currentPc;
             currentPc.x = cell.x
-            currentPc.y = cell.y-16
+            currentPc.y = cell.y //+16 //-48
             currentPc.move('down');
             currentPc.halt();
             //cell.removeSprite(cell.sprites[1]);

@@ -23,13 +23,13 @@ scratch, recreating, beginning anew. (gd)
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 3,
-  playerSpeed: 3.2,
+  zoom: 2,
+  playerSpeed: 6, //.4,
   bgMusic: false
 }
 
 // ex.Physics.boundsPadding = config.playerSpeed * 3;
-// ex.Physics.collisionPasses = 24;
+// ex.Physics.collisionPasses = 2;
 
 const game = new Game(800, 600, config);
 const levelOne = new LevelOne();

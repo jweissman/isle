@@ -204,10 +204,10 @@ export class Player extends ex.Actor {
 
   update(engine, delta) {
     //this.currentDrawing = this.walkSprites[this.facing];
-    if (Math.abs(this.vel.x + this.vel.y) < this.speed) {
-      this.halt();
-      //this.currentDrawing = this.sprites[this.facing];
-    }
+    //if (Math.abs(this.vel.x + this.vel.y) < this.speed) {
+    //  this.halt();
+    //  //this.currentDrawing = this.sprites[this.facing];
+    //}
     super.update(engine, delta);
     this.setZIndex(this.computeZ());
     //console.log({z: this.getZIndex()})

@@ -17,11 +17,17 @@ const inventorySprites: { [key in Material]: ex.Sprite } = {
 class StockLine { // extends ex.UIActor {
     // spriteFont: ex.SpriteFont
     label: ex.Label
-    constructor(public material: Material, public count: number, public yOff: number, public spriteFont: ex.SpriteFont) {
+    constructor(
+        public material: Material,
+        public count: number,
+        public yOff: number,
+        public baseFontFamily: string,
+        public spriteFont: ex.SpriteFont
+        ) {
         //super(0, yOff * 30, 200, 20)
         
 
-        this.label = new ex.Label(`${material} x ${count}`, 0, 0, 'Helvetica', this.spriteFont)
+        this.label = new ex.Label(`${material} x ${count}`, 0, 0, baseFontFamily); // 'Helvetica', this.spriteFont)
         this.label.fontSize = 12
         this.label.color = ex.Color.White
         //this.add(this.label)
@@ -43,12 +49,12 @@ class StockLine { // extends ex.UIActor {
 class Inventory extends ex.UIActor {
     lineItems: { [key in Material]: StockLine }
 
-    constructor(public x: number, public y: number, public spriteFont: ex.SpriteFont) {
+    constructor(public x: number, public y: number, public fontFamily: string, public spriteFont: ex.SpriteFont) {
         super(x,y,100,300);
 
         this.lineItems = {
-            [Material.Wood]: new StockLine(Material.Wood, 0, 0, spriteFont),
-            [Material.Stone]: new StockLine(Material.Stone, 0, 1, spriteFont)
+            [Material.Wood]: new StockLine(Material.Wood, 0, 0, fontFamily, spriteFont),
+            [Material.Stone]: new StockLine(Material.Stone, 0, 1, fontFamily, spriteFont)
         }
 
         //Object.keys(this.lineItems).forEach(material => this.add(this.lineItems[material]));
@@ -85,6 +91,7 @@ class Hud extends ex.UIActor {
     }
 
     initialize(game: Game) {
+        const baseFont = 'Helvetica';
         this.spriteFont = new ex.SpriteFont(
             Resources.Alphabet,
             'abcdefghijklmnopqrstuvwxyz1234567890.,!?() ',
@@ -97,19 +104,19 @@ class Hud extends ex.UIActor {
             '(press E to interact)',
             game.canvasWidth / 2,
             game.canvasHeight - 40,
-            'Arial',
-            this.spriteFont
+            baseFont,
+            // this.spriteFont
         );
         this.output.color = ex.Color.White;
         this.output.fontSize = 48
         this.output.setWidth(game.canvasWidth);
         this.output.textAlign = ex.TextAlign.Center;
 
-        const brand = new ex.Label('ISLE', 10, 50, 'Arial', this.spriteFont);
+        const brand = new ex.Label('ISLE', 10, 50, baseFont) //, this.spriteFont);
         brand.color = ex.Color.Azure;
         brand.fontSize = 24
 
-        this.inventory = new Inventory(game.canvasWidth - 300, 50, this.spriteFont) // .text = 'a bunch of stuff';
+        this.inventory = new Inventory(game.canvasWidth - 300, 50, baseFont, this.spriteFont) // .text = 'a bunch of stuff';
 
         this.add(this.output);
         this.add(brand);
@@ -120,7 +127,7 @@ class Hud extends ex.UIActor {
             [Material.Stone]: 0
         })
 
-        this.equipped = new ex.Label('Equipped. NONE', 10, 80, 'Arial', this.spriteFont);
+        this.equipped = new ex.Label('Equipped. NONE', 10, 80, baseFont) //, this.spriteFont);
         this.add(this.equipped);
     }
 
