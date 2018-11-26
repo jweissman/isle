@@ -23,6 +23,7 @@ class World {
     itemKinds: { [key: string]: ItemKind }
     playerCharacterMeta: { [name: string]: {
         sprites: ex.SpriteSheet,
+        portrait: ex.Sprite,
         primary: boolean
     }}
     debugBoxes: boolean
@@ -45,10 +46,13 @@ class World {
         this.playerCharacterMeta = {
             Alex: {
                 sprites: new ex.SpriteSheet(Resources.Alex, 4, 7, 32, 64),
+                portrait: Resources.AlexPortrait.asSprite(),
                 primary: true
             },
             Miranda: {
                 sprites: new ex.SpriteSheet(Resources.Miranda, 4, 7, 32, 64),
+                portrait: Resources.MirandaPortrait.asSprite(),
+                //portrait: Resources.AlexPortrait.asSprite,
                 primary: false
             }
         }
@@ -108,7 +112,7 @@ class World {
             //cell.removeSprite(cell.sprites[1]);
             // todo remove new pc from cell, add old pc TO that cell...
             this.makePrimaryCharacter(it);
-            this.hud.equip(it.equipped);
+            // this.hud.equip(it.equipped);
             return message;
         }
     }
@@ -197,14 +201,21 @@ class World {
         if (pcMeta) {
             let { x, y } = cell;
             console.log("CREATE PC", { pcMeta });
-            const pc = new Player(name, x, y, this.config, pcMeta.sprites, this.engine);
+            const pc = new Player(
+                name,
+                x, y,
+                this.config,
+                pcMeta.sprites,
+                pcMeta.portrait,
+                this.engine
+            );
             pc.wireWorld(this);
             this.scene.add(pc);
-            cell['__isle_pc'] = pc;
             if (pcMeta.primary) {
                 this.makePrimaryCharacter(pc);
             } else {
                 console.log("PC is not primary", { pcMeta });
+                cell['__isle_pc'] = pc;
             }
         }
     }
@@ -218,6 +229,9 @@ class World {
         // fix cam!
         this.scene.camera.strategy.lockToActor(pc);
         this.scene.camera.zoom(this.config.zoom);
+
+        // tell hud
+        this.hud.playing(pc);
     }
 
     primaryCharacter() {

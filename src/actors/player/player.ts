@@ -26,7 +26,8 @@ export class Player extends ex.Actor {
     public y: number,
     protected config: GameConfig,
     protected spriteSheet: ex.SpriteSheet,
-    private engine: ex.Engine,
+    public portrait: ex.Sprite,
+    engine: ex.Engine,
   ) {
     super(x, y, 32, 64);
 

@@ -8,7 +8,10 @@ const spritemap = require('./images/spritemap.png')
 const basicSprites = require('./images/basic-sprites.png')
 
 const alex = require('./images/alex-sprites.png')
+const alexPortrait = require('./images/alex-portrait.png')
+
 const miranda = require('./images/miranda-sprites.png')
+const mirandaPortrait = require('./images/miranda-portrait.png')
 
 const greatPalm = require('./images/greatpalm.png')
 const palm = require('./images/palm.png')
@@ -22,12 +25,15 @@ let mapName = 'solidity';
 let Resources = {
     // app logo
     Brand: new ex.Texture(brand),
+
     // spritefont
     Alphabet: new ex.Texture(alpha),
 
     // images
     Alex: new ex.Texture(alex),
+    AlexPortrait: new ex.Texture(alexPortrait),
     Miranda: new ex.Texture(miranda),
+    MirandaPortrait: new ex.Texture(mirandaPortrait),
 
     //Sword: new ex.Texture(sword),
     Spritemap: new ex.Texture(spritemap), // SpriteSheet(spritemap)

@@ -24,8 +24,8 @@ const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
   zoom: 2,
-  playerSpeed: 6, //.4,
-  bgMusic: false
+  playerSpeed: 6.8, //.4,
+  bgMusic: true
 }
 
 // ex.Physics.boundsPadding = config.playerSpeed * 3;

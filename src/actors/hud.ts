@@ -4,6 +4,8 @@ import { Material } from '../world';
 import { Resources } from '../resources';
 import { BasicSpriteMap } from '../basic_sprites';
 import { Item } from '../models';
+import { Player } from '.';
+import { UIActor, Actor } from 'excalibur';
 
 //class Inventory extends ex.UIActor {
 //    // backpack:
@@ -22,7 +24,7 @@ class StockLine { // extends ex.UIActor {
         public count: number,
         public yOff: number,
         public baseFontFamily: string,
-        public spriteFont: ex.SpriteFont
+        // public spriteFont: ex.SpriteFont
         ) {
         //super(0, yOff * 30, 200, 20)
         
@@ -49,12 +51,17 @@ class StockLine { // extends ex.UIActor {
 class Inventory extends ex.UIActor {
     lineItems: { [key in Material]: StockLine }
 
-    constructor(public x: number, public y: number, public fontFamily: string, public spriteFont: ex.SpriteFont) {
+    constructor(
+        public x: number,
+        public y: number,
+        public fontFamily: string,
+        // public spriteFont: ex.SpriteFont
+    ) {
         super(x,y,100,300);
 
         this.lineItems = {
-            [Material.Wood]: new StockLine(Material.Wood, 0, 0, fontFamily, spriteFont),
-            [Material.Stone]: new StockLine(Material.Stone, 0, 1, fontFamily, spriteFont)
+            [Material.Wood]: new StockLine(Material.Wood, 0, 0, fontFamily), //, spriteFont),
+            [Material.Stone]: new StockLine(Material.Stone, 0, 1, fontFamily) //, spriteFont)
         }
 
         //Object.keys(this.lineItems).forEach(material => this.add(this.lineItems[material]));
@@ -77,13 +84,74 @@ class Inventory extends ex.UIActor {
     }
 }
 
+class ActivePlayer extends ex.UIActor {
+    currentPlayer: ex.Label
+    equipped: ex.Label
+    playerPortrait: ex.UIActor
+    equipmentDrawing: ex.UIActor
+
+    constructor(public x: number, public y: number, public baseFont: string) {
+        super(x,y); //,64,48)
+
+        //this.add(//new Actor()
+
+        this.currentPlayer = new ex.Label('???', 0, 10, baseFont);
+        this.currentPlayer.color = ex.Color.White;
+        this.currentPlayer.fontSize = 16
+        //this.currentPlayer.addDrawing(player.)
+        this.add(this.currentPlayer)
+
+        this.equipped = new ex.Label('Equipped: NONE', 0, 124, baseFont) //, this.spriteFont);
+        this.equipped.color = ex.Color.White;
+        this.equipped.fontSize = 16
+        this.add(this.equipped);
+
+        this.playerPortrait = new ex.UIActor(0,10); //x,y,48,48);
+        this.playerPortrait.scale = new ex.Vector(2,2);
+        this.add(this.playerPortrait);
+
+        this.equipmentDrawing = new ex.UIActor(0,124);
+        this.equipmentDrawing.scale = new ex.Vector(2,2)
+        this.add(this.equipmentDrawing);
+    }
+
+    equip(item: Item) {
+        if (item && item.kind) {
+            this.equipped.text = `${item.kind.name}`;
+            if (item.kind.drawing) {
+                this.equipmentDrawing.addDrawing(item.kind.name, item.kind.drawing);
+                this.equipmentDrawing.setDrawing(item.kind.name)
+                this.add(this.equipmentDrawing);
+            }
+        } else {
+            this.equipped.text = "(no equipment)" // `Equipped. None`;
+            this.remove(this.equipmentDrawing);
+            //this.equipmentDrawing.opacity = 0; //.setDrawing(null);
+        }
+    }
+
+    playing(player: Player) {
+        this.currentPlayer.text = `Playing: ${player.name}`
+        if (player.equipped) {
+            this.equip(player.equipped)
+        } else {
+            this.equip(null);
+        }
+        this.playerPortrait.addDrawing(player.name, player.portrait);
+        this.playerPortrait.setDrawing(player.name);
+        //this.currentPlayer.pos = new ex.Vector(200,200)
+    }
+}
+
 
 class Hud extends ex.UIActor {
     output: ex.Label
-    equipped: ex.Label
+    activePlayer: ActivePlayer
+    //currentPlayer: ex.Label
+    //equipped: ex.Label
 
     inventory: Inventory //ex.UIActor
-    spriteFont: ex.SpriteFont
+    //spriteFont: ex.SpriteFont
 
     constructor(game: Game) {
         super(0, 0, game.canvasWidth, game.canvasHeight);
@@ -92,31 +160,23 @@ class Hud extends ex.UIActor {
 
     initialize(game: Game) {
         const baseFont = 'Helvetica';
-        this.spriteFont = new ex.SpriteFont(
-            Resources.Alphabet,
-            'abcdefghijklmnopqrstuvwxyz1234567890.,!?() ',
-            true,
-            8, 6,
-            16, 16
-        )
-        //this.spriteFont.useTextShadow(true);
+
         this.output = new ex.Label(
             '(press E to interact)',
             game.canvasWidth / 2,
             game.canvasHeight - 40,
             baseFont,
-            // this.spriteFont
         );
         this.output.color = ex.Color.White;
         this.output.fontSize = 48
         this.output.setWidth(game.canvasWidth);
         this.output.textAlign = ex.TextAlign.Center;
 
-        const brand = new ex.Label('ISLE', 10, 50, baseFont) //, this.spriteFont);
+        const brand = new ex.Label('ISLE', 20, 60, baseFont)
         brand.color = ex.Color.Azure;
         brand.fontSize = 24
 
-        this.inventory = new Inventory(game.canvasWidth - 300, 50, baseFont, this.spriteFont) // .text = 'a bunch of stuff';
+        this.inventory = new Inventory(game.canvasWidth - 300, 50, baseFont) //, this.spriteFont) // .text = 'a bunch of stuff';
 
         this.add(this.output);
         this.add(brand);
@@ -127,8 +187,14 @@ class Hud extends ex.UIActor {
             [Material.Stone]: 0
         })
 
-        this.equipped = new ex.Label('Equipped. NONE', 10, 80, baseFont) //, this.spriteFont);
-        this.add(this.equipped);
+        this.activePlayer = new ActivePlayer(20,70,baseFont);
+        this.add(this.activePlayer);
+        //this.currentPlayer = new ex.Label('Current Player. ???', 10, 80, baseFont);
+        ////this.currentPlayer.addDrawing(player.)
+        //this.add(this.currentPlayer)
+
+        //this.equipped = new ex.Label('Equipped. NONE', 10, 80, baseFont) //, this.spriteFont);
+        //this.add(this.equipped);
     }
 
     updateInventory(stocks: {[key: string]: number}) {
@@ -144,12 +210,13 @@ class Hud extends ex.UIActor {
     }
 
     equip(item: Item) {
-        if (item) {
-            this.equipped.text = `Equipped. ${item.kind.name}`;
-        } else {
-            this.equipped.text = `Equipped. None`;
-        }
+        this.activePlayer.equip(item);
+    }
+
+    playing(player: Player) {
+        this.activePlayer.playing(player);
     }
 }
+
 
 export { Hud };
