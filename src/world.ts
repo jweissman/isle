@@ -56,7 +56,7 @@ class World {
                 primary: true
             },
             Miranda: {
-                sprites: new ex.SpriteSheet(Resources.Miranda, 4, 1, 32, 64),
+                sprites: new ex.SpriteSheet(Resources.Miranda, 4, 7, 32, 64),
                 primary: false
             }
         }

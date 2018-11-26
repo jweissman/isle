@@ -1,12 +1,13 @@
 import * as ex from 'excalibur';
 import TiledResource from '@excaliburjs/excalibur-tiled';
 
+const alpha = require('./images/alpha.png')
 // const sword = require('./images/sword.png');
 const spritemap = require('./images/spritemap.png')
 const basicSprites = require('./images/basic-sprites.png')
 
 const alex = require('./images/alex-sprites.png')
-const miranda = require('./images/miranda.png')
+const miranda = require('./images/miranda-sprites.png')
 
 const greatPalm = require('./images/greatpalm.png')
 const palm = require('./images/palm.png')
@@ -18,6 +19,9 @@ const fineMist = require('./sounds/finemist.mp3')
 let mapName = 'solidity';
 
 let Resources = {
+    // spritefont
+    Alphabet: new ex.Texture(alpha),
+
     // images
     Alex: new ex.Texture(alex),
     Miranda: new ex.Texture(miranda),
