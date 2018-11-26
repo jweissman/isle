@@ -1,13 +1,16 @@
 import * as ex from 'excalibur';
 import { Game } from '../../game';
-import { Direction, oppositeWay, addScalarToVec, dirFromVec } from '../../util';
-import { Vector } from 'excalibur';
+import { Direction, oppositeWay, addScalarToVec, dirFromVec, angleFromDir } from '../../util';
+import { Vector, Effects } from 'excalibur';
 import { World } from '../../world';
 import { GameConfig } from '../../game_config';
 import { Item } from '../../models';
 
 export class Player extends ex.Actor {
-  interacting: boolean
+  interacting: boolean // is querying world?
+  usingItem: boolean   // currently using equipped item?
+  usingItemTicks: number
+
   equipped: Item
 
   speed: number
@@ -15,6 +18,7 @@ export class Player extends ex.Actor {
   _world: World
   sprites: { [key: string]: ex.Sprite }
   walkSprites: { [key: string]: ex.Animation }
+  equipSprite: ex.Sprite
 
   constructor(
     public name: string,
@@ -30,8 +34,10 @@ export class Player extends ex.Actor {
     this.color = new ex.Color(255, 255, 255);
 
     this.collisionType = ex.CollisionType.Active;
+    this.collisionArea.recalc();
     this.speed = config.playerSpeed;
     this.interacting = false;
+    this.usingItem = false;
 
     this.sprites = {
       'down':  spriteSheet.getSprite(0),
@@ -41,7 +47,7 @@ export class Player extends ex.Actor {
     }
 
     let walkFrames = [1,2,3,4,5,6].map(x => x * 4)
-    let animRate = 125;
+    let animRate = 125; // 100; // 50; //25;
     this.walkSprites = {
       'down': spriteSheet.getAnimationByIndices(
         engine,
@@ -65,19 +71,6 @@ export class Player extends ex.Actor {
       )
     }
 
-    // assemble indexes for walking...
-    //let directions = ['down', 'up', 'right', 'left'];
-    //directions.forEach((dir: Direction, column: number) => {
-    //  //let dirIndices: number[] = [0,1,2,3,4,5].map((index: number) => {
-    //  //  return 4 + index*4 + column
-    //  //})
-    //  this.sprites['walk'][dir] = spriteSheet.getAnimationByIndices(
-    //    engine,
-    //    [1,2,3,4],
-    //    8
-    //  )
-    //})
-
     // set facing + init sprite
     this.move('down');
     this.halt();
@@ -88,20 +81,34 @@ export class Player extends ex.Actor {
   interact() {
     let pos = this.interactionPos();
     this.interacting = true;
-    let entityAndCell = this._world.entityAt(pos.x, pos.y) ||
-      this._world.entityAt(pos.x, pos.y+10) ||
-      this._world.entityAt(pos.x, pos.y-10) ||
-      this._world.entityAt(pos.x-10, pos.y) ||
-      this._world.entityAt(pos.x+10, pos.y);
+    let entityAndCell = this._world.entityNear(pos.x, pos.y)
+
     if (entityAndCell) {
       let { entity, cell } = entityAndCell;
       return this._world.interact(entity, cell);
     }
   }
 
+  equip(it: Item) {
+    this.equipped = it;
+    this.equipSprite = it.kind.drawing.clone()
+    this.equipSprite.scale = new ex.Vector(1.25, 1.25)
+    //this.equipSprite.anchor = new ex.Vector(0,1);
+  }
+
+  interactUsingEquipped() {
+    let pos = this.interactionPos();
+    this.interacting = true;
+    let entityAndCell = this._world.entityNear(pos.x, pos.y)
+    if (entityAndCell) {
+      let { entity, cell } = entityAndCell;
+      return this._world.useItem(entity, cell, this.equipped)
+    }
+  }
+
   interactionPos(): { x:number, y:number }  {
     let interactionPos = this.getCenter().clone();
-    let yOff = 20; //this.facing === 'up' ? 10 : 16;
+    let yOff = 20;
     if (this.facing === 'up') { yOff -= 2; }
     if (this.facing === 'down') { yOff -= 4; }
     interactionPos.y += yOff; //this.getHeight();
@@ -110,19 +117,58 @@ export class Player extends ex.Actor {
     return interactionPos;
   }
 
-  draw(ctx: CanvasRenderingContext2D, engine) {
-    super.draw(ctx, engine);
+  useEquippedItem() {
+    // if (!this.usingItem) {
+      this.usingItem = true;
+      this.usingItemTicks = 0;
+      this.interactUsingEquipped();
+    // }
+  }
 
-    if (this.equipped) {
-      let littleDrawing = this.equipped.kind.drawing.clone()
-      littleDrawing.scale = new ex.Vector(0.5, 0.5)
-      littleDrawing.draw(ctx, this.pos.x, this.pos.y)
+  equipmentPos(): { x: number, y: number } {
+    let equipmentPos = this.getCenter().clone();
+    if (this.facing === 'left') {
+      //equipmentPos.x -= 6;
+      equipmentPos.y += 6;
+    } else {
+      equipmentPos.x -= 4;
+      equipmentPos.y += 8;
+    }
+    return equipmentPos;
+  }
+
+  draw(ctx: CanvasRenderingContext2D, engine) {
+    if (!(this.facing === 'up')) {
+      super.draw(ctx, engine);
+    }
+
+    if (this.usingItem && this.equipped && this.equipSprite) {
+      let littleDrawing = this.equipSprite;
+      let ticks = this.usingItemTicks;
+      if (this.facing === 'left') {
+        ticks = 6-ticks;
+        littleDrawing.flipHorizontal = true;
+        littleDrawing.anchor = new ex.Vector(-1, 1);
+      } else {
+        littleDrawing.flipHorizontal = false;
+        littleDrawing.anchor = new ex.Vector(0, 1);
+        if (this.facing === 'up') { ticks = ticks-4; }
+        if (this.facing === 'down') { ticks = ticks+6; }
+        //if (this.facing === 'down') { ticks = ticks-4; }
+      }
+      littleDrawing.rotation = (ticks / 3) - 1;
+      let equipPos = this.equipmentPos();
+      littleDrawing.draw(ctx, equipPos.x, equipPos.y); //this.x, this.y); //equipPos.y);
+    }
+
+    if ((this.facing === 'up')) {
+      super.draw(ctx, engine);
     }
 
     if (this.config.debugBoundingBoxes) {
       this.collisionArea.debugDraw(ctx, ex.Color.Chartreuse);
       if (this.interacting) {
-        let pos = this.interactionPos(); //getCenter().clone();
+        let pos = this.interactionPos();
         ctx.fillRect(pos.x, pos.y - 10, 4, 4);
         ctx.fillRect(pos.x, pos.y, 4, 4);
         ctx.fillRect(pos.x, pos.y + 10, 4, 4);
@@ -137,6 +183,7 @@ export class Player extends ex.Actor {
 
   halt = () => {
     this.vel = new ex.Vector(0, 0);
+    this.currentDrawing = this.sprites[this.facing];
   }
 
   move = (direction: Direction) => {
@@ -147,17 +194,32 @@ export class Player extends ex.Actor {
     if (direction === 'right') { this.vel.x = step; }
     if (direction === 'up')    { this.vel.y = -step; }
     if (direction === 'down')  { this.vel.y = step; }
+
+    this.currentDrawing = this.walkSprites[this.facing];
+    //if (Math.abs(this.vel.x + this.vel.y) < this.speed) {
+    //  this.halt();
+    //  this.currentDrawing = this.sprites[this.facing];
+    //}
   }
 
   update(engine, delta) {
-    this.currentDrawing = this.walkSprites[this.facing];
+    //this.currentDrawing = this.walkSprites[this.facing];
     if (Math.abs(this.vel.x + this.vel.y) < this.speed) {
       this.halt();
-      this.currentDrawing = this.sprites[this.facing];
+      //this.currentDrawing = this.sprites[this.facing];
     }
     super.update(engine, delta);
     this.setZIndex(this.computeZ());
     //console.log({z: this.getZIndex()})
+    if (this.usingItem) {
+      let itemSwingTime = 5;
+      this.usingItemTicks += 1;
+      if (this.usingItemTicks > itemSwingTime) {
+        this.usingItem = false;
+      } else {
+        // this.interactUsingEquipped();
+      }
+    }
   }
 
 }

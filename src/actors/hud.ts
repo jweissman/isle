@@ -3,6 +3,7 @@ import { Game } from '../game';
 import { Material } from '../world';
 import { Resources } from '../resources';
 import { BasicSpriteMap } from '../basic_sprites';
+import { Item } from '../models';
 
 //class Inventory extends ex.UIActor {
 //    // backpack:
@@ -73,6 +74,8 @@ class Inventory extends ex.UIActor {
 
 class Hud extends ex.UIActor {
     output: ex.Label
+    equipped: ex.Label
+
     inventory: Inventory //ex.UIActor
     spriteFont: ex.SpriteFont
 
@@ -89,6 +92,7 @@ class Hud extends ex.UIActor {
             8, 6,
             16, 16
         )
+        //this.spriteFont.useTextShadow(true);
         this.output = new ex.Label(
             '(press E to interact)',
             game.canvasWidth / 2,
@@ -115,10 +119,13 @@ class Hud extends ex.UIActor {
             [Material.Wood]: 0,
             [Material.Stone]: 0
         })
+
+        this.equipped = new ex.Label('Equipped. NONE', 10, 80, 'Arial', this.spriteFont);
+        this.add(this.equipped);
     }
 
     updateInventory(stocks: {[key: string]: number}) {
-        console.log("UPDATE INV", { stocks });
+        // console.log("UPDATE INV", { stocks });
         this.inventory.setStock(stocks);
     }
 
@@ -127,6 +134,14 @@ class Hud extends ex.UIActor {
       this.output.opacity = 1;
       this.output.actions.clearActions();
       this.output.actions.fade(0, 4000);
+    }
+
+    equip(item: Item) {
+        if (item) {
+            this.equipped.text = `Equipped. ${item.kind.name}`;
+        } else {
+            this.equipped.text = `Equipped. None`;
+        }
     }
 }
 

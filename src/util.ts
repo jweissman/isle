@@ -88,6 +88,20 @@ const dirFromVec = (vec: ex.Vector): Direction => {
   }
 }
 
+const angleFromDir = (dir: Direction): number => {
+   switch (dir) {
+    case 'up':
+      return 90;
+    case 'down':
+      return 270;
+    case 'left':
+      return 180;
+    case 'right':
+      return 0;
+  }
+ 
+}
+
 export {
   clamp,
   Direction,
@@ -96,5 +110,6 @@ export {
   dirFromVec,
   oppositeWay,
   mode,
-  coinflip
+  coinflip,
+  angleFromDir
 };

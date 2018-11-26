@@ -51,7 +51,7 @@ export class Thing extends ex.Actor {
                 this.body.usePolygonCollision(vecs);
             }
             else {
-                console.warn("implement collider:", { collision });
+                // console.warn("implement collider:", { collision });
                 //debugger;
             }
         }

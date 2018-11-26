@@ -6,20 +6,17 @@ import { Resources } from './resources';
 import { Player } from './actors';
 import { GameConfig } from './game_config';
 import { Hud } from './actors/hud';
-// import { GameConfig } from './game_config';
-// import { SpriteSheet, Sprite } from 'excalibur';
 
 type Entity = Item | Player
 
+// maybe goes in models??
 export enum Material {
     Wood = 'wood',
     Stone = 'stone',
-    // Strand, Ivy, Thread, Rope = 'rope'
 }
 
 type Stocks = { [key in Material]: number }
 
-// hmmmm (maybe more like a world-factory? [now def more world-ly...])
 class World {
     island: Isle
     tileMap: ex.TileMap
@@ -37,12 +34,7 @@ class World {
 
     stocks: Stocks
 
-    // blockingActors: Array<ex.Actor>
-    // itemKindBySpriteId: { [spriteId: number]: ItemKind }
-
     constructor(
-        //public mapResource: TiledResource,
-        //public debugBoxes: boolean,
         public scene: ex.Scene,
         public hud: Hud,
         public config: GameConfig,
@@ -61,7 +53,6 @@ class World {
             }
         }
         this.debugBoxes = config.debugBoundingBoxes;
-        //this._processTiledMap();
 
         this.stocks = {
             wood: 0,
@@ -71,12 +62,17 @@ class World {
 
     enterCraftMode(itemName: string, x: number, y: number) {
         this.crafting = true;
-        this.craftingItem = itemName; // 'Campfire';
+        this.craftingItem = itemName;
         this.craftingAt = { x, y };
     }
 
     equip(it: Item) {
-        this._primaryCharacter.equipped = it;
+        if (this._primaryCharacter.equipped) {
+            // drop current item
+            this.spawn(this._primaryCharacter.equipped.kind, this.playerCell())
+        }
+        this._primaryCharacter.equip(it);
+        this.hud.equip(it);
     }
 
     collect(it: Item, material: Material, count: number = 1) {
@@ -112,7 +108,17 @@ class World {
             //cell.removeSprite(cell.sprites[1]);
             // todo remove new pc from cell, add old pc TO that cell...
             this.makePrimaryCharacter(it);
+            this.hud.equip(it.equipped);
             return message;
+        }
+    }
+
+    useItem(it: Entity, cell: ex.Cell, equipment: Item): string {
+        if (it instanceof Item) {
+            let msg = it.activate(equipment) || `use ${equipment.kind.name} on ${it.kind.name} `;
+            this.hud.describe(msg);
+            return msg;
+
         }
     }
 
@@ -131,8 +137,16 @@ class World {
         return null;
     }
 
+    entityNear(x: number, y: number): { entity: Entity, cell: ex.Cell} {
+        return this.entityAt(x, y) ||
+            this.entityAt(x, y + 10) ||
+            this.entityAt(x, y - 10) ||
+            this.entityAt(x - 10, y) ||
+            this.entityAt(x + 10, y)
+    }
+
     destroy(it: Item) {
-        console.log("DESTROY", {it});
+        console.log("DESTROY", { it });
         let { kind, cell } = it;
         let { size } = kind;
         for (const x of Array(size).keys()) {
@@ -208,6 +222,13 @@ class World {
 
     primaryCharacter() {
         return this._primaryCharacter;
+    }
+
+    playerCell() {
+        return this.tileMap.getCellByPoint(
+            this._primaryCharacter.x,
+            this._primaryCharacter.y
+        )
     }
 
     processTiledMap(mapResource: TiledResource) {

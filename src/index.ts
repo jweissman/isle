@@ -24,9 +24,12 @@ const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
   zoom: 3,
-  playerSpeed: 5,
+  playerSpeed: 3.2,
   bgMusic: false
 }
+
+// ex.Physics.boundsPadding = config.playerSpeed * 3;
+// ex.Physics.collisionPasses = 24;
 
 const game = new Game(800, 600, config);
 const levelOne = new LevelOne();
@@ -97,32 +100,32 @@ game.start().then(() => {
     let theme = Resources.FineMist; //Science;
     // wait a tiny bit for music to load??? (seems to work welll)
     setTimeout(() => {
-      console.log('about to play music', { theme, isLoaded: theme.isLoaded() });
+      // console.log('about to play music', { theme, isLoaded: theme.isLoaded() });
       theme.play(0.2) //1.0)
     }, 3000);
   }
 
-  game.input.pointers.primary.on('move', (e: ex.Input.PointerEvent) => {
-    // console.log("MOUSE MOVE");
-    let { pos } = e;
-    if (world && world.crafting) {
-      // console.log("MOUSE MOVE while CRAFTING...");
-      let cell = world.tileMap.getCellByPoint(pos.x, pos.y);
-      let x = cell.x, y = cell.y;
-      let screenPos = game.worldToScreenCoordinates(new ex.Vector(x,y));
-      //world.craftingItem = 'campfire';
-      world.craftingAt = screenPos;
-      //console.log("draw fire sprite at", {x,y});
-      //fireSprite.draw(game.ctx, x, y); //cell.x * 32, cell.y * 32);
-    }
-  });
+  //game.input.pointers.primary.on('move', (e: ex.Input.PointerEvent) => {
+  //  // console.log("MOUSE MOVE");
+  //  let { pos } = e;
+  //  if (world && world.crafting) {
+  //    // console.log("MOUSE MOVE while CRAFTING...");
+  //    let cell = world.tileMap.getCellByPoint(pos.x, pos.y);
+  //    let x = cell.x, y = cell.y;
+  //    let screenPos = game.worldToScreenCoordinates(new ex.Vector(x,y));
+  //    //world.craftingItem = 'campfire';
+  //    world.craftingAt = screenPos;
+  //    //console.log("draw fire sprite at", {x,y});
+  //    //fireSprite.draw(game.ctx, x, y); //cell.x * 32, cell.y * 32);
+  //  }
+  //});
 
   game.input.pointers.primary.on('down', (e: ex.Input.PointerEvent) => {
     let { pos } = e;
-    console.log("CLICK", { pos });
+    // console.log("CLICK", { pos });
     if (world && world.crafting) { // && world.ableToCraft()) {
-      console.log("CLICK while CRAFTING");
-      hud.describe(`would build ${world.craftingItem}!`);
+      // console.log("CLICK while CRAFTING");
+      // hud.describe(`would build ${world.craftingItem}!`);
       let kind = world.itemKinds[world.craftingItem];
 
       let cell = world.tileMap.getCellByPoint(pos.x, pos.y);
@@ -131,6 +134,10 @@ game.start().then(() => {
       world.crafting = false;
       world.debit(Material.Wood);
       //world.primaryCharacter().a
+    } else {
+      if (world._primaryCharacter.equipped) {
+        world.primaryCharacter().useEquippedItem();
+      }
     }
   })
 

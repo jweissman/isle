@@ -36,9 +36,9 @@ class Item {
 
     initialize() {}
 
-    activate() {
-      console.warn("item is non-interactive",
-          { kind: this.kind });
+    activate(it?: Item) {
+    //   console.warn("item is non-interactive",
+    //       { kind: this.kind });
         return null; //'...';
     }
 }
@@ -52,16 +52,18 @@ class Chest extends Item {
         //this.actor.addDrawing();
     }
 
-    activate() {
-        console.log("Chest activated!");
-        if (this.state.open) {
-            this.actor.setDrawing('closed');
-            this.state = { open: false };
-            return 'closed';
-        } else {
-            this.actor.setDrawing('open');
-            this.state = { open: true }
-            return 'opened';
+    activate(it: Item) {
+        if (!it) {
+            console.log("Chest activated!");
+            if (this.state.open) {
+                this.actor.setDrawing('closed');
+                this.state = { open: false };
+                return 'closed';
+            } else {
+                this.actor.setDrawing('open');
+                this.state = { open: true }
+                return 'opened';
+            }
         }
     }
 }
@@ -82,15 +84,19 @@ class BigCampfire extends Item {
 }
 
 class WoodLog extends Item {
-  activate() {
-      this.world.collect(this, Material.Wood);
+  activate(it: Item) {
+      if (!it) {
+          this.world.collect(this, Material.Wood);
+      }
       return this.kind.description;
-  }
+    }
 }
 
 class WoodLogStack extends Item {
-    activate() {
-        this.world.collect(this, Material.Wood, 3);
+    activate(it: Item) {
+        if (!it) {
+            this.world.collect(this, Material.Wood, 3);
+        }
         return this.kind.description;
     }
 }
@@ -103,10 +109,10 @@ class GreatPalm extends Item {
         this.actor.setDrawing('palm');
     }
 
-    activate() {
+    activate(it: Item) {
         if (this.state.hp > 0) {
-            const message: string = `once a seed (${this.state.hp}%)`
-            let damage = this.world._primaryCharacter.equipped ? 30 : 3;
+            const message: string = `once a seed (${this.state.hp})`
+            let damage = it && it.kind.name === 'Handaxe' ? 25 : 0; // this.world._primaryCharacter.equipped ? 30 : 3;
             this.state.hp -= damage;
             return message;
         } else {
@@ -137,7 +143,15 @@ class Handaxe extends Item {
     activate() {
         this.world.equip(this);
         this.world.destroy(this);
-        return "chop chop";
+        return this.kind.description;
+    }
+}
+
+class Machete extends Item {
+    activate() {
+        this.world.equip(this);
+        this.world.destroy(this);
+        return this.kind.description;
     }
 }
 
@@ -148,7 +162,8 @@ const itemClasses = {
     BigCampfire,
     WoodLog,
     WoodLogStack,
-    Handaxe
+    Handaxe,
+    Machete,
 };
 
 const buildItem = (kind: ItemKind, actor: ex.Actor, cell: Cell, world: World): Item => {

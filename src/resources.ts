@@ -2,6 +2,7 @@ import * as ex from 'excalibur';
 import TiledResource from '@excaliburjs/excalibur-tiled';
 
 const alpha = require('./images/alpha.png')
+const brand = require('./images/brand.png')
 // const sword = require('./images/sword.png');
 const spritemap = require('./images/spritemap.png')
 const basicSprites = require('./images/basic-sprites.png')
@@ -19,6 +20,8 @@ const fineMist = require('./sounds/finemist.mp3')
 let mapName = 'solidity';
 
 let Resources = {
+    // app logo
+    Brand: new ex.Texture(brand),
     // spritefont
     Alphabet: new ex.Texture(alpha),
 
@@ -41,7 +44,7 @@ let Resources = {
 
 Resources.Map.imagePathAccessor = (path, tileset) => {
     let actualPath = path.replace(/^(?:\.\.\/)+/, "");
-    console.log("LOAD IMG", { path, actualPath });
+    // console.log("LOAD IMG", { path, actualPath });
     return actualPath;
     // return "/assets/" + path;
 }

@@ -26,20 +26,20 @@ export class LevelOne extends ex.Scene {
     super.draw(ctx, delta);
 
     // draw currently-crafting item...
-    if (this.world && this.world.crafting) {
-      console.log("TRYING TO DRAW CRAFTING ITEM", this.world.craftingItem);
-      let sprite: ex.Sprite = BasicSpriteMap[this.world.craftingItem]; //.clone();
-      if (sprite) { //BasicSpriteMap[this.world.craftingItem])
-        let craftPreview = sprite.clone()
-        let { x, y } = this.world.craftingAt;
-        // console.log("draw crafting item at", {x,y});
-        craftPreview.opacity(0.5);
-        craftPreview.scale = new ex.Vector(2, 2);
+    //if (this.world && this.world.crafting) {
+    //  // console.log("TRYING TO DRAW CRAFTING ITEM", this.world.craftingItem);
+    //  let sprite: ex.Sprite = BasicSpriteMap[this.world.craftingItem]; //.clone();
+    //  if (sprite) { //BasicSpriteMap[this.world.craftingItem])
+    //    let craftPreview = sprite.clone()
+    //    let { x, y } = this.world.craftingAt;
+    //    // console.log("draw crafting item at", {x,y});
+    //    craftPreview.opacity(0.5);
+    //    craftPreview.scale = new ex.Vector(2, 2);
 
-        // maybe it's red if we can't do it??
+    //    // maybe it's red if we can't do it??
 
-        craftPreview.draw(ctx, x, y);
-      }
-    }
+    //    craftPreview.draw(ctx, x, y);
+    //  }
+    //}
   }
 }
