@@ -102,6 +102,10 @@ const angleFromDir = (dir: Direction): number => {
  
 }
 
+function range(start, end): Array<number> {
+  return Array(end - start + 1).fill(0).map((_, idx) => start + idx)
+}
+
 export {
   clamp,
   Direction,
@@ -111,5 +115,6 @@ export {
   oppositeWay,
   mode,
   coinflip,
-  angleFromDir
+  angleFromDir,
+  range
 };

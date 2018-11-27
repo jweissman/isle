@@ -1,7 +1,7 @@
 import * as ex from 'excalibur';
 import { World, Material } from './world';
 import { Cell } from 'excalibur';
-import { coinflip } from './util';
+import { coinflip, range } from './util';
 import { BasicSpriteMap } from './basic_sprites';
 
 //type Material = 'wood' | 'stone' | 'glass'; // | 'rope'
@@ -68,18 +68,26 @@ class Chest extends Item {
     }
 }
 
-class Palm extends Item {
-    initialize() {
-        this.actor.addDrawing('palm', BasicSpriteMap.palm);
-        this.actor.setDrawing('palm');
-    }
-}
 
 class BigCampfire extends Item {
     initialize() {
         this.actor.addDrawing('fire', BasicSpriteMap.BigCampfire);
         this.actor.setDrawing('fire');
         //this.actor.setDrawing('big')
+    }
+}
+
+class Pylon extends Item {
+    initialize() {
+        this.actor.addDrawing('pylon', BasicSpriteMap.pylon);
+        this.actor.setDrawing('pylon');
+    }
+}
+
+class StoneBlock extends Item {
+    initialize() {
+        this.actor.addDrawing('stoneblock', BasicSpriteMap.stoneBlock);
+        this.actor.setDrawing('stoneblock')
     }
 }
 
@@ -101,22 +109,23 @@ class WoodLogStack extends Item {
     }
 }
 
-class GreatPalm extends Item {
+class Tree extends Item {
     state: { hp: number } = { hp: 100 }
 
-    initialize() {
-        this.actor.addDrawing('palm', BasicSpriteMap.greatPalm);
-        this.actor.setDrawing('palm');
-    }
-
     activate(it: Item) {
+        if (!it) {
+            return this.kind.description;
+        }
+
         if (this.state.hp > 0) {
             const message: string = `once a seed (${this.state.hp})`
             let damage = it && it.kind.name === 'Handaxe' ? 25 : 0; // this.world._primaryCharacter.equipped ? 30 : 3;
             this.state.hp -= damage;
             return message;
         } else {
-            let baseCells: Array<ex.Cell> = [-2,-1,0,1,2].map((offset) => //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
+            let basis = this.kind.size ? (this.kind.size/2) : 1;
+            console.log({basis});
+            let baseCells: Array<ex.Cell> = range(-basis,basis).map((offset) => //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
                 this.world.tileMap.getCellByIndex(
                     this.cell.index +
                     (this.kind.size / 2) + offset +
@@ -136,6 +145,37 @@ class GreatPalm extends Item {
             });
             return "timber";
         }
+    }
+
+}
+
+class Palm extends Tree {
+    state: { hp: number } = { hp: 25 }
+    initialize() {
+        this.actor.addDrawing('palm', BasicSpriteMap.palm);
+        this.actor.setDrawing('palm');
+    }
+}
+
+class Oak extends Tree {
+    state: { hp: number } = { hp: 40 }
+    initialize() {
+        this.actor.addDrawing('oak', BasicSpriteMap.oak);
+        this.actor.setDrawing('oak');
+    }
+}
+
+class GreatPalm extends Tree {
+    initialize() {
+        this.actor.addDrawing('palm', BasicSpriteMap.greatPalm);
+        this.actor.setDrawing('palm');
+    }
+}
+
+class GreatOak extends Tree {
+    initialize() {
+        this.actor.addDrawing('oak', BasicSpriteMap.greatOak);
+        this.actor.setDrawing('oak');
     }
 }
 
@@ -157,11 +197,18 @@ class Machete extends Item {
 
 const itemClasses = {
     Chest,
+
     Palm,
     GreatPalm,
+    Oak,
+    GreatOak,
     BigCampfire,
+    Pylon,
     WoodLog,
     WoodLogStack,
+
+    StoneBlock,
+
     Handaxe,
     Machete,
 };

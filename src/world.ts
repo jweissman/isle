@@ -101,18 +101,16 @@ class World {
             let { name, description } = it.kind;
             return it.activate() || description;
         } else if (it instanceof Player) {
-            // console.log("WOULD SWAP PLAYER CHARACTER!!!", {it});
             let currentPc = this._primaryCharacter;
             let message = `nice to see you again, ${currentPc.name}`;
             cell['__isle_pc'] = currentPc;
             currentPc.x = cell.x
-            currentPc.y = cell.y //+16 //-48
+            currentPc.y = cell.y
             currentPc.move('down');
             currentPc.halt();
             //cell.removeSprite(cell.sprites[1]);
             // todo remove new pc from cell, add old pc TO that cell...
             this.makePrimaryCharacter(it);
-            // this.hud.equip(it.equipped);
             return message;
         }
     }
@@ -255,6 +253,7 @@ class World {
 
         let itemKindBySpriteId: { [spriteId: number]: ItemKind } = {};
 
+
         _mapRes.data.tilesets.forEach((ts) => {
             //console.log("TILESET", { ts });
             if (ts.terrains) {
@@ -338,17 +337,19 @@ class World {
                 }, {});
                 console.log({ characterById });
             } else {
-                console.warn('no chars in tileset', { tiles: ts.tiles })
+                console.warn('no player characters in tileset!', { tiles: ts.tiles })
             }
         });
 
         this.tileMap = _mapRes.getTileMap();
+        //this.tileMap.
 
         // this.blockingActors = [];
 
         this.tileMap.data.forEach((cell: ex.Cell, index) => {
 
             if (cell.sprites[0]) {
+                //cell.sprites[0].
                 let tile = spriteTerrainById[cell.sprites[0].spriteId];
                 cell = Object.assign(cell, tile);
                 // we have another sprite, maybe a thing to build a box for?

@@ -15,6 +15,13 @@ const mirandaPortrait = require('./images/miranda-portrait.png')
 
 const greatPalm = require('./images/greatpalm.png')
 const palm = require('./images/palm.png')
+
+const greatOak = require('./images/greatOak.png')
+const oak = require('./images/oak.png')
+
+const stone = require('./images/stone.png')
+const pylon = require('./images/pylon.png')
+
 const campfire = require('./images/campfire.png')
 
 const fineMist = require('./sounds/finemist.mp3')
@@ -42,6 +49,12 @@ let Resources = {
     GreatPalm: new ex.Texture(greatPalm),
     Palm: new ex.Texture(palm),
     Campfire: new ex.Texture(campfire),
+
+    Oak: new ex.Texture(oak),
+    GreatOak: new ex.Texture(greatOak),
+
+    Stone: new ex.Texture(stone),
+    Pylon: new ex.Texture(pylon),
 
     // music
     FineMist: new ex.Sound(fineMist),
