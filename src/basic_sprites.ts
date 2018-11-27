@@ -1,16 +1,20 @@
 import * as ex from 'excalibur';
 import { Resources } from './resources';
 
-const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 8, 8, 32, 32);
+const basicSprites = new ex.SpriteSheet(Resources.BasicSprites, 16, 8, 32, 32);
 
+const babyPalm = basicSprites.getSprite(0);
 const palm = Resources.Palm.asSprite();
 const greatPalm = Resources.GreatPalm.asSprite();
 
+const babyOak = basicSprites.getSprite(12);
 const oak = Resources.Oak.asSprite();
 const greatOak = Resources.GreatOak.asSprite();
 
 const pylon = Resources.Pylon.asSprite();
+
 const stoneBlock = Resources.Stone.asSprite();
+const greatStone = Resources.GreatStone.asSprite();
 
 const BigCampfire = Resources.Campfire.asSprite();
 
@@ -19,9 +23,11 @@ export const BasicSpriteMap = {
     chestClosed: basicSprites.getSprite(2),
     chestOpen: basicSprites.getSprite(3),
 
+    babyPalm,
     palm,
     greatPalm,
 
+    babyOak,
     oak,
     greatOak,
 
@@ -31,8 +37,9 @@ export const BasicSpriteMap = {
     BigCampfire,
 
     stoneBlock, 
+    greatStone,
 
     // materials...
-    wood: basicSprites.getSprite(9),
-    stone: basicSprites.getSprite(15),
+    wood: basicSprites.getSprite(17), //9),
+    stone: basicSprites.getSprite(23), // 15),
 };

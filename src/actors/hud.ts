@@ -107,7 +107,7 @@ class ActivePlayer extends ex.UIActor {
         this.add(this.equipped);
 
         this.playerPortrait = new ex.UIActor(0,10); //x,y,48,48);
-        this.playerPortrait.scale = new ex.Vector(2,2);
+        // this.playerPortrait.scale = new ex.Vector(2,2);
         this.add(this.playerPortrait);
 
         this.equipmentDrawing = new ex.UIActor(0,124);

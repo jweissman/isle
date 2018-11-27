@@ -4,45 +4,51 @@ import { Cell } from 'excalibur';
 import { coinflip, range } from './util';
 import { BasicSpriteMap } from './basic_sprites';
 
-//type Material = 'wood' | 'stone' | 'glass'; // | 'rope'
-
+// item 'species' -- name + description come from tile map metadata, other things are scratch pads
 interface ItemKind {
     name: string
     description: string
-    //public sprite: ex.Sprite,
-
-    z?: number
+    z?: number // not sure but i am thinking this can go away entirely
     size?: number
-
     drawing?: ex.Sprite
     collision?: any
-    // alternate?: boolean
 }
 
 class Item {
-    //static sprites: { [key: string]: ex.Sprite }
-
     constructor(
         public kind: ItemKind,
         public actor: ex.Actor,
         public cell: ex.Cell, // the 'root' cell (upper-left corner of large objs)
-        //public sprite: ex.Sprite,
-        //public state: Object = {},
         public world: World
     ) {
-        //console.log("CREATED ITEM", { kind: this.kind, sprite: this.sprite });
         this.initialize();
     }
 
     initialize() {}
 
     activate(it?: Item) {
-    //   console.warn("item is non-interactive",
-    //       { kind: this.kind });
         return null; //'...';
     }
 }
 
+// tools
+class Handaxe extends Item {
+    activate() {
+        this.world.equip(this);
+        this.world.destroy(this);
+        return this.kind.description;
+    }
+}
+
+class Machete extends Item {
+    activate() {
+        this.world.equip(this);
+        this.world.destroy(this);
+        return this.kind.description;
+    }
+}
+
+// containers
 class Chest extends Item {
     state: { open: boolean } = { open: false }
 
@@ -69,6 +75,7 @@ class Chest extends Item {
 }
 
 
+// doodads
 class BigCampfire extends Item {
     initialize() {
         this.actor.addDrawing('fire', BasicSpriteMap.BigCampfire);
@@ -84,10 +91,19 @@ class Pylon extends Item {
     }
 }
 
+
+// resources ...
 class StoneBlock extends Item {
     initialize() {
         this.actor.addDrawing('stoneblock', BasicSpriteMap.stoneBlock);
         this.actor.setDrawing('stoneblock')
+    }
+}
+
+class GreatStone extends Item {
+    initialize() {
+        this.actor.addDrawing('greatstone', BasicSpriteMap.greatStone);
+        this.actor.setDrawing('greatstone');
     }
 }
 
@@ -109,44 +125,43 @@ class WoodLogStack extends Item {
     }
 }
 
-class Tree extends Item {
-    state: { hp: number } = { hp: 100 }
 
-    activate(it: Item) {
-        if (!it) {
-            return this.kind.description;
-        }
+class Tree extends Item {
+    hitPoints: number = 100
+    state: { hp: number } = { hp: this.hitPoints }
+
+    protected hitBy(it: Item) {
+        let damage = it.kind.name === 'Handaxe' ? 25 : 0;
+        this.state.hp -= damage;
+    }
+
+    public activate(it: Item) {
+        if (!it) { return this.kind.description; }
+
+        this.hitBy(it);
 
         if (this.state.hp > 0) {
-            const message: string = `once a seed (${this.state.hp})`
-            let damage = it && it.kind.name === 'Handaxe' ? 25 : 0; // this.world._primaryCharacter.equipped ? 30 : 3;
-            this.state.hp -= damage;
+            const message: string = `once a seed (${this.state.hp}/${this.hitPoints})`
             return message;
         } else {
-            let basis = this.kind.size ? (this.kind.size/2) : 1;
-            console.log({basis});
-            let baseCells: Array<ex.Cell> = range(-basis,basis).map((offset) => //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
-                this.world.tileMap.getCellByIndex(
-                    this.cell.index +
-                    (this.kind.size / 2) + offset +
-                    ((this.kind.size - 1) * this.world.tileMap.cols)
-                )
-            );
-
-            this.world.destroy(this);
-
-            baseCells.forEach(base => {
-                let logKind = coinflip() ? 'WoodLogStack' : 'WoodLog';
-
-                this.world.spawn(
-                    this.world.itemKinds[logKind],
-                    base,
-                );
-            });
+            this.blowUp();
             return "timber";
         }
     }
 
+    protected blowUp() {
+        let basis = this.kind.size ? (this.kind.size / 2) : 1;
+        console.log({ basis });
+        let baseCells: Array<ex.Cell> = range(-basis, basis).map((offset) => //this.cell; //world.tileMap.getCellByPoint(this.actor.x, this.actor.y);
+            this.world.tileMap.getCellByIndex(this.cell.index +
+                (this.kind.size / 2) + offset +
+                ((this.kind.size - 1) * this.world.tileMap.cols)));
+        this.world.destroy(this);
+        baseCells.forEach(base => {
+            let logKind = coinflip() ? 'WoodLogStack' : 'WoodLog';
+            this.world.spawn(this.world.itemKinds[logKind], base);
+        });
+    }
 }
 
 class Palm extends Tree {
@@ -179,35 +194,55 @@ class GreatOak extends Tree {
     }
 }
 
-class Handaxe extends Item {
-    activate() {
-        this.world.equip(this);
+class LittleTree extends Tree {
+    state: { hp: number } = { hp: 10 }
+    protected hitBy(it: Item) {
+        // only machete??
+        let canHit = it.kind.name === 'Machete' || it.kind.name === 'Handaxe';
+        let damage = canHit ? 25 : 0;
+        this.state.hp -= damage;
+    }
+
+    protected blowUp() {
+        // just explode, no resources
         this.world.destroy(this);
-        return this.kind.description;
     }
 }
 
-class Machete extends Item {
-    activate() {
-        this.world.equip(this);
-        this.world.destroy(this);
-        return this.kind.description;
+class BabyPalm extends LittleTree {
+    initialize() {
+        this.actor.addDrawing('palm', BasicSpriteMap.babyPalm);
+        this.actor.setDrawing('palm');
+    }   
+}
+
+class BabyOak extends LittleTree {
+    initialize() {
+        this.actor.addDrawing('oak', BasicSpriteMap.babyOak);
+        this.actor.setDrawing('oak');
     }
 }
+
+
 
 const itemClasses = {
     Chest,
 
+    BabyPalm,
     Palm,
     GreatPalm,
+
+    BabyOak,
     Oak,
     GreatOak,
+
     BigCampfire,
     Pylon,
     WoodLog,
     WoodLogStack,
 
     StoneBlock,
+    GreatStone,
 
     Handaxe,
     Machete,

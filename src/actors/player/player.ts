@@ -100,10 +100,16 @@ export class Player extends ex.Actor {
   interactUsingEquipped() {
     let pos = this.interactionPos();
     this.interacting = true;
-    let entityAndCell = this._world.entityNear(pos.x, pos.y)
-    if (entityAndCell) {
-      let { entity, cell } = entityAndCell;
-      return this._world.useItem(entity, cell, this.equipped)
+    let entities = this._world.entitiesNear(pos.x, pos.y)
+    let entitiesInteracted = [];
+    if (entities) {
+      entities.forEach(entityAndCell => {
+        let { entity, cell } = entityAndCell;
+        if (!entitiesInteracted.find(e => e === entity)) {
+          this._world.useItem(entity, cell, this.equipped);
+          entitiesInteracted.push(entity);
+        }
+      })
     }
   }
 

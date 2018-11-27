@@ -139,12 +139,27 @@ class World {
         return null;
     }
 
-    entityNear(x: number, y: number): { entity: Entity, cell: ex.Cell} {
+    entityNear(x: number, y: number, tol: number = 8): { entity: Entity, cell: ex.Cell} {
         return this.entityAt(x, y) ||
-            this.entityAt(x, y + 10) ||
-            this.entityAt(x, y - 10) ||
-            this.entityAt(x - 10, y) ||
-            this.entityAt(x + 10, y)
+            this.entityAt(x, y + tol) ||
+            this.entityAt(x, y - tol) ||
+            this.entityAt(x - tol, y) ||
+            this.entityAt(x + tol, y)
+    }
+
+    entitiesNear(x: number, y: number, tol: number = 32): Array<{ entity: Entity, cell: ex.Cell }> {
+        let positions = [
+            {x,y},
+            {x, y: y + tol},
+            {x, y: y - tol},
+            {x: x - tol, y},
+            {x: x + tol, y}
+        ]
+
+        return positions
+            .map(pos => this.entityNear(pos.x, pos.y))
+            .filter(Boolean);
+
     }
 
     destroy(it: Item) {
