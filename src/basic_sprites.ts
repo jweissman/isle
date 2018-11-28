@@ -15,6 +15,9 @@ const pylon = Resources.Pylon.asSprite();
 
 const stoneBlock = Resources.Stone.asSprite();
 const greatStone = Resources.GreatStone.asSprite();
+const stoneWall = Resources.StoneWall12.asSprite();
+
+const waterfall = Resources.Waterfall.asSprite();
 
 const BigCampfire = Resources.Campfire.asSprite();
 
@@ -38,6 +41,9 @@ export const BasicSpriteMap = {
 
     stoneBlock, 
     greatStone,
+    stoneWall,
+
+    waterfall,
 
     // materials...
     wood: basicSprites.getSprite(17), //9),

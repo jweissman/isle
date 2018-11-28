@@ -9,9 +9,11 @@ interface ItemKind {
     name: string
     description: string
     z?: number // not sure but i am thinking this can go away entirely
-    size?: number
     drawing?: ex.Sprite
     collision?: any
+    
+    size?: number
+    width?: number // override size for long horizontal things...
 }
 
 class Item {
@@ -28,6 +30,11 @@ class Item {
 
     activate(it?: Item) {
         return null; //'...';
+    }
+
+    useDrawing(sprite: ex.Sprite) {
+        this.actor.addDrawing('static-image', sprite);
+        this.actor.setDrawing('static-image');
     }
 }
 
@@ -78,16 +85,13 @@ class Chest extends Item {
 // doodads
 class BigCampfire extends Item {
     initialize() {
-        this.actor.addDrawing('fire', BasicSpriteMap.BigCampfire);
-        this.actor.setDrawing('fire');
-        //this.actor.setDrawing('big')
+        this.useDrawing(BasicSpriteMap.BigCampfire);
     }
 }
 
 class Pylon extends Item {
     initialize() {
-        this.actor.addDrawing('pylon', BasicSpriteMap.pylon);
-        this.actor.setDrawing('pylon');
+        this.useDrawing(BasicSpriteMap.pylon);
     }
 }
 
@@ -95,15 +99,13 @@ class Pylon extends Item {
 // resources ...
 class StoneBlock extends Item {
     initialize() {
-        this.actor.addDrawing('stoneblock', BasicSpriteMap.stoneBlock);
-        this.actor.setDrawing('stoneblock')
+        this.useDrawing(BasicSpriteMap.stoneBlock);
     }
 }
 
 class GreatStone extends Item {
     initialize() {
-        this.actor.addDrawing('greatstone', BasicSpriteMap.greatStone);
-        this.actor.setDrawing('greatstone');
+        this.useDrawing(BasicSpriteMap.greatStone);
     }
 }
 
@@ -223,7 +225,19 @@ class BabyOak extends LittleTree {
     }
 }
 
+class StoneWall extends Item {
+    initialize() {
+        this.actor.addDrawing('stonewall', BasicSpriteMap.stoneWall);
+        this.actor.setDrawing('stonewall');
+    }
+}
 
+class Waterfall extends Item {
+    initialize() {
+        this.actor.addDrawing('waterfall', BasicSpriteMap.waterfall);
+        this.actor.setDrawing('waterfall');
+    }
+}
 
 const itemClasses = {
     Chest,
@@ -243,6 +257,9 @@ const itemClasses = {
 
     StoneBlock,
     GreatStone,
+    StoneWall,
+
+    Waterfall,
 
     Handaxe,
     Machete,

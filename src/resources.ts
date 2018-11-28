@@ -21,6 +21,10 @@ const oak = require('./images/oak.png')
 
 const stone = require('./images/stone.png')
 const greatStone = require('./images/greatstone.png')
+const stoneWallTwelve = require('./images/stone-wall-12.png')
+
+const waterfall = require('./images/waterfall.png')
+
 const pylon = require('./images/pylon.png')
 
 const campfire = require('./images/campfire.png')
@@ -56,6 +60,9 @@ let Resources = {
 
     Stone: new ex.Texture(stone),
     GreatStone: new ex.Texture(greatStone),
+    StoneWall12: new ex.Texture(stoneWallTwelve),
+
+    Waterfall: new ex.Texture(waterfall),
 
     Pylon: new ex.Texture(pylon),
 

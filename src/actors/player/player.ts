@@ -29,9 +29,14 @@ export class Player extends ex.Actor {
     public portrait: ex.Sprite,
     engine: ex.Engine,
   ) {
-    super(x, y, 32, 64);
 
-    this.collisionArea.body.useCircleCollision(6, new ex.Vector(0, 22));
+    super(x, y, 32, 64); //64);
+    //this.c
+    // this.anchor = new ex.Vector(0,48);
+    // this.anchor = new ex.Vector(0,8);
+
+    this.collisionArea.body.useCircleCollision(6, new ex.Vector(0, 26));
+    //this.collisionArea.pos
     this.color = new ex.Color(255, 255, 255);
 
     this.collisionType = ex.CollisionType.Active;
@@ -144,9 +149,9 @@ export class Player extends ex.Actor {
     return equipmentPos;
   }
 
-  draw(ctx: CanvasRenderingContext2D, engine) {
+  draw(ctx: CanvasRenderingContext2D, delta: number) { //engine) {
     if (!(this.facing === 'up')) {
-      super.draw(ctx, engine);
+      super.draw(ctx, delta);
     }
 
     if (this.usingItem && this.equipped && this.equipSprite) {
@@ -160,7 +165,7 @@ export class Player extends ex.Actor {
         littleDrawing.flipHorizontal = false;
         littleDrawing.anchor = new ex.Vector(0, 1);
         if (this.facing === 'up') { ticks = ticks-4; }
-        if (this.facing === 'down') { ticks = ticks+6; }
+        // if (this.facing === 'down') { ticks = ticks+6; }
         //if (this.facing === 'down') { ticks = ticks-4; }
       }
       littleDrawing.rotation = (ticks / 3) - 1;
@@ -169,7 +174,7 @@ export class Player extends ex.Actor {
     }
 
     if ((this.facing === 'up')) {
-      super.draw(ctx, engine);
+      super.draw(ctx, delta);
     }
 
     if (this.config.debugBoundingBoxes) {

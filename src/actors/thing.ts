@@ -5,11 +5,13 @@ export class Thing extends ex.Actor {
     constructor(
         public x: number,
         public y: number,
-        public zOff: number = 0,
-        public size: number = 1,
+        // public zOff: number = 0,
+        public width: number = 1,
+        public height: number = 1,
+        public layer: number = 0,
         public debugBoxes: boolean,
     ) {
-        super(x, y, 32 * size, 32 * size, ex.Color.Chartreuse);
+        super(x, y, 32 * width, 32 * height, ex.Color.Chartreuse);
     }
 
     draw(ctx, engine) {
@@ -20,22 +22,23 @@ export class Thing extends ex.Actor {
         }
     }
 
-    computeZ = () => (this.y + 4 + (this.size-1) * 16); // / 10000;
+    computeZ = () => (this.y + 4 + (this.height-1) * 16) + this.layer; // / 10000;
     constructCollisionArea(collision) {
         if (!collision) {
-            if (this.size > 1) {
+            if (this.width > 1 || this.height > 1) {
                 // console.log("CREATE LARGE THING!!!")
                 this.collisionType = ex.CollisionType.Fixed;
                 this.body.useBoxCollision(
                     new ex.Vector(
                         0, //(32 * this.size) / 2,
-                        (16 * this.size) - 14 
+                        (16 * this.height) - 14 
                     )
                 )
-                this.setHeight((26*this.size) / 4);
-                this.setWidth(24*this.size);
+                this.setHeight((26*this.height) / 4);
+                this.setWidth(30*this.width);
             } else {
-                this.collisionType = ex.CollisionType.PreventCollision;
+                // this.collisionType = ex.CollisionType.PreventCollision;
+                this.collisionType = ex.CollisionType.Fixed;
             }
         }
         else {

@@ -23,8 +23,8 @@ scratch, recreating, beginning anew. (gd)
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 2,
-  playerSpeed: 6.8, //.4,
+  zoom: 3,
+  playerSpeed: 4.7, // 5.8, //.4,
   bgMusic: true
 }
 
@@ -105,20 +105,25 @@ game.start().then(() => {
     }, 3000);
   }
 
-  //game.input.pointers.primary.on('move', (e: ex.Input.PointerEvent) => {
-  //  // console.log("MOUSE MOVE");
+  // game.input.pointers.primary.on('move', (e: ex.Input.PointerEvent) => {
+  // //  // console.log("MOUSE MOVE");
   //  let { pos } = e;
-  //  if (world && world.crafting) {
-  //    // console.log("MOUSE MOVE while CRAFTING...");
+  //  if (world && world.tileMap) {
   //    let cell = world.tileMap.getCellByPoint(pos.x, pos.y);
-  //    let x = cell.x, y = cell.y;
-  //    let screenPos = game.worldToScreenCoordinates(new ex.Vector(x,y));
-  //    //world.craftingItem = 'campfire';
-  //    world.craftingAt = screenPos;
-  //    //console.log("draw fire sprite at", {x,y});
-  //    //fireSprite.draw(game.ctx, x, y); //cell.x * 32, cell.y * 32);
+  //    hud.describe(`solid: ${cell.solid}`);
+  //   //  world.sp
   //  }
-  //});
+  // //  if (world && world.crafting) {
+  // //    // console.log("MOUSE MOVE while CRAFTING...");
+  // //    let cell = world.tileMap.getCellByPoint(pos.x, pos.y);
+  // //    let x = cell.x, y = cell.y;
+  // //    let screenPos = game.worldToScreenCoordinates(new ex.Vector(x,y));
+  // //    //world.craftingItem = 'campfire';
+  // //    world.craftingAt = screenPos;
+  // //    //console.log("draw fire sprite at", {x,y});
+  // //    //fireSprite.draw(game.ctx, x, y); //cell.x * 32, cell.y * 32);
+  // //  }
+  // });
 
   game.input.pointers.primary.on('down', (e: ex.Input.PointerEvent) => {
     let { pos } = e;

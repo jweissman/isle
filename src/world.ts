@@ -9,6 +9,8 @@ import { Hud } from './actors/hud';
 
 type Entity = Item | Player
 
+// type CellContents = Entity[]
+
 // maybe goes in models??
 export enum Material {
     Wood = 'wood',
@@ -27,6 +29,12 @@ class World {
         primary: boolean
     }}
     debugBoxes: boolean
+
+    spriteCollisionById: object = {};
+    characterById: object = {};
+    itemKindBySpriteId: { [spriteId: number]: ItemKind } = {};
+
+
 
     // craft state...
     crafting: boolean
@@ -52,7 +60,6 @@ class World {
             Miranda: {
                 sprites: new ex.SpriteSheet(Resources.Miranda, 4, 7, 32, 64),
                 portrait: Resources.MirandaPortrait.asSprite(),
-                //portrait: Resources.AlexPortrait.asSprite,
                 primary: false
             }
         }
@@ -63,6 +70,11 @@ class World {
             stone: 0,
         }
     }
+
+    // askYesNo(question: string): boolean {
+    //     //this.os
+    //     return false;
+    // }
 
     enterCraftMode(itemName: string, x: number, y: number) {
         this.crafting = true;
@@ -80,11 +92,11 @@ class World {
     }
 
     collect(it: Item, material: Material, count: number = 1) {
-      console.log("WOULD COLLECT ITEM", { it, material, count });
+    //   console.log("WOULD COLLECT ITEM", { it, material, count });
       this.destroy(it);
       this.stocks[material] += count;
       this.hud.updateInventory(this.stocks);
-      console.log("AFTER COLLECT ITEM", { it, material, count, stocks: this.stocks });
+    //   console.log("AFTER COLLECT ITEM", { it, material, count, stocks: this.stocks });
     }
 
     debit(material: Material, count: number = 1) {
@@ -128,8 +140,8 @@ class World {
         let cell = this.tileMap.getCellByPoint(x, y);
         // console.log("looking for entity at ", { x, y, cell });
         if (cell) {
-            if (cell['__isle_item']) {
-                let it: Item = cell['__isle_item'];
+            if (cell['__isle_items'] && cell['__isle_items'].length) {
+                let it: Item = cell['__isle_items'][0]; // just hand back first for now??
                 return { entity: it, cell };
             } else if (cell['__isle_pc']) {
                 let pc: Player = cell['__isle_pc'];
@@ -163,14 +175,32 @@ class World {
     }
 
     destroy(it: Item) {
-        console.log("DESTROY", { it });
         let { kind, cell } = it;
-        let { size } = kind;
-        for (const x of Array(size).keys()) {
+        let { size, width } = kind;
+        width = width || size;
+        console.log("DESTROY", { it, kind: it.kind.name, size, width });
+        for (const x of Array(width).keys()) {
             for (const y of Array(size).keys()) {
                 let cellToMark = this.tileMap.getCellByIndex(cell.index + x + (y * this.tileMap.cols));
-                // remove item from list...
-                cellToMark['__isle_item'] = null;
+                // todo remove item from list...
+                if (cellToMark['__isle_items'].find(item => it === item)) { // ==.kind === kind) {
+                    cellToMark['__isle_items'] = cellToMark['__isle_items'].filter(item => it !== item);
+                }
+                //cellToMark.clearSprites();
+                // }; // = null;
+
+                //if (cellToMark.sprites.length > 1) {
+                //    // console.l
+                //    for (let otherSprite of cellToMark.sprites) {
+                //        let otherSpriteId = otherSprite.spriteId;
+                //        let otherKind = this.itemKindBySpriteId[otherSpriteId];
+
+                //        // hmm -- could check if it's even the same kind of thing...?
+                //        if (otherKind === kind) {
+                //            cellToMark.removeSprite(otherSprite);//cellToMark.sprites[1]);
+                //        }
+                //    }
+                //}
             }
         }
 
@@ -179,13 +209,14 @@ class World {
         return true;
     }
 
-    spawn(kind: ItemKind, cell: ex.Cell): Thing {
-        let { size } = kind;
+    spawn(kind: ItemKind, cell: ex.Cell, layer: number = 0): Thing {
+        let { size, width } = kind;
         size = size || 1;
+        width = width || size;
 
-        let x = cell.x + 16 * size;
+        let x = cell.x + 16 * width;
         let y = cell.y + 16 * size;
-        let thing: Thing = new Thing(x, y, size, size, this.debugBoxes);
+        let thing: Thing = new Thing(x, y, width, size, layer, this.debugBoxes);
 
         if (kind.drawing) {
           thing.addDrawing(kind.drawing);
@@ -195,16 +226,18 @@ class World {
 
         let theItem: Item = buildItem(kind, thing, cell, this);
         this.island.items.push(theItem);
-        for (const x of Array(size).keys()) {
+        for (const x of Array(width).keys()) {
             for (const y of Array(size).keys()) {
                 let cellToMark = this.tileMap.getCellByIndex(cell.index + x + (y * this.tileMap.cols));
-                cellToMark['__isle_item'] = theItem;
+
+                cellToMark['__isle_items'] = cellToMark['__isle_items'] || []; //.push(theItem);
+                cellToMark['__isle_items'].push(theItem);
             }
         }
 
         this.scene.add(thing);
         thing.setZIndex(thing.computeZ());
-        // console.log(`SPAWN ${kind.name}`, { kind, thing });
+        console.log(`SPAWN ${kind.name}`, { kind, thing });
         return thing;
     }
 
@@ -213,7 +246,7 @@ class World {
         let pcMeta = this.playerCharacterMeta[name];
         if (pcMeta) {
             let { x, y } = cell;
-            console.log("CREATE PC", { pcMeta });
+            // console.log("CREATE PC", { pcMeta });
             const pc = new Player(
                 name,
                 x, y,
@@ -227,18 +260,17 @@ class World {
             if (pcMeta.primary) {
                 this.makePrimaryCharacter(pc);
             } else {
-                console.log("PC is not primary", { pcMeta });
+                // console.log("PC is not primary", { pcMeta });
                 cell['__isle_pc'] = pc;
             }
         }
     }
 
     makePrimaryCharacter(pc: Player) {
-        console.log("CREATE PRIMARY PC!!!", { pc });
         this._primaryCharacter = pc;
         pc.move('down');
         pc.halt();
-        //pc.facing = 'down';
+
         // fix cam!
         this.scene.camera.strategy.lockToActor(pc);
         this.scene.camera.zoom(this.config.zoom);
@@ -259,52 +291,32 @@ class World {
     }
 
     processTiledMap(mapResource: TiledResource) {
-        let _mapRes: TiledResource = mapResource; // Resources.Map;
+        let _mapRes: TiledResource = mapResource;
         let terrainMeta = {};
         let spriteTerrainById = {};
-        let spriteCollisionById = {};
-
-        let characterById = {};
-
-        let itemKindBySpriteId: { [spriteId: number]: ItemKind } = {};
-
-
         _mapRes.data.tilesets.forEach((ts) => {
-            //console.log("TILESET", { ts });
             if (ts.terrains) {
-                ts.terrains.forEach(terrain => {
+                ts.terrains.forEach((terrain, index) => {
                     if (terrain.properties) {
-                        terrainMeta[terrain.tile] = terrain.properties.reduce((acc, curr) => {
+                        let tile = index; // terrain.tile; // terrain tiles lie?
+                        terrainMeta[tile] = terrain.properties.reduce((acc, curr) => {
                             let { name, value } = curr;
                             return (<any>Object).assign(acc, { [name]: value })
                         }, {});
-
-                        terrainMeta[terrain.tile].terrainName = terrain.name;
-
-                        console.log(
-                            `terrain ${terrain.name} (${terrain.tile}) has props: `,
-                            terrainMeta[terrain.tile]
-                        )
+                        terrainMeta[tile].terrainName = terrain.name;
                     }
                 });
 
                 spriteTerrainById = ts.tiles.reduce((acc, curr) => {
                     let { terrain, id } = curr;
-                    const solid = terrain.every(tile => terrainMeta[tile] && terrainMeta[tile].solid); // : false);
+                    const solid = terrain.every(tile => terrainMeta[tile] && terrainMeta[tile].solid);
                     let terrainTile = { solid };
-                    // console.log(`terrain set for ${id}`, { solid }, terrain.map(tile => terrainMeta[tile]))
                     return (<any>Object).assign(acc, { [id]: terrainTile });
                 }, {});
-
-                // console.log({ terrainMeta, spriteTerrainById });
             }
 
-            // console.log({tiles: ts.tiles})
             if (ts.tiles && ts.tiles.some(tile => tile.objectgroup)) {
-                // should also grab item/obj metadata here?
-                // console.log("todo -- extract obj group collision frame?");
-                //debugger;
-                spriteCollisionById = ts.tiles.reduce((acc, curr) => {
+                this.spriteCollisionById = ts.tiles.reduce((acc, curr) => {
                     let { objectgroup, id } = curr;
                     if (objectgroup && objectgroup.objects && objectgroup.objects.length) {
                         return (<any>Object).assign(acc, { [id]: objectgroup.objects[0] });
@@ -313,12 +325,7 @@ class World {
                     }
                 }, {});
 
-                console.log({ spriteCollisionById });
-                console.log({ ts });
-
-                itemKindBySpriteId = ts.tiles.reduce((acc, curr) => {
-                    // debugger;
-                    //console.log({ curr });
+                this.itemKindBySpriteId = ts.tiles.reduce((acc, curr) => {
                     if (curr.properties && !curr.properties.some(prop => prop.name === 'character')) {
                         let currMeta = curr.properties.reduce((acc, curr) => {
                             let { name, value } = curr;
@@ -331,100 +338,107 @@ class World {
                         return acc;
                     }
                 }, {})
-                //console.log({ itemKindBySpriteId })
-
                 
             }
 
-            if (ts.tiles && ts.tiles.some(tile => tile.properties && tile.properties.some(prop => prop.name === 'character'))) {
-                // console.log('character somewhere!!');
-                characterById = ts.tiles.reduce((acc, curr) => {
+            let hasCharacters = ts.tiles &&
+                ts.tiles.some(tile => tile.properties && tile.properties.some(prop => prop.name === 'character'));
+
+            if (hasCharacters) {
+                this.characterById = ts.tiles.reduce((acc, curr) => {
                     if (curr.properties && curr.properties.some(prop => prop.name === 'character')) {
-                        // console.log('char found!', { curr });
                         let charProp = curr.properties.find(prop => prop.name === 'character');
                         let name = charProp.value;
                         return (<any>Object.assign(acc, {
-                            [curr.id]: name // charProp.value // curr.properties.character.name
+                            [curr.id]: name
                         }));
                     } else {
                         return acc;
                     }
                 }, {});
-                console.log({ characterById });
             } else {
                 console.warn('no player characters in tileset!', { tiles: ts.tiles })
             }
         });
 
         this.tileMap = _mapRes.getTileMap();
-        //this.tileMap.
 
-        // this.blockingActors = [];
-
-        this.tileMap.data.forEach((cell: ex.Cell, index) => {
-
+        this.tileMap.data.forEach((cell: ex.Cell, cellIndex: number) => {
             if (cell.sprites[0]) {
-                //cell.sprites[0].
-                let tile = spriteTerrainById[cell.sprites[0].spriteId];
-                cell = Object.assign(cell, tile);
-                // we have another sprite, maybe a thing to build a box for?
-                if (cell.sprites[1]) {
-                    // we could use the sprite, but... also we could do something else
-                    // build our own sprite with z-indexes
-                    // better yet: spawn an entity
+                let terrainSpriteId = cell.sprites[0].spriteId;
+                let tile = spriteTerrainById[terrainSpriteId];
+                if (tile) {
+                    cell = Object.assign(cell, tile);
+                }
+            }
 
-                    let { spriteSheetKey, spriteId } = cell.sprites[1];
-                    cell.removeSprite(cell.sprites[1]); //hhclearSprites();
-                    const kind: ItemKind = itemKindBySpriteId[spriteId];
-                    if (!kind) {
-                        const characterName: string = characterById[spriteId];
-                        if (characterName) {
-                            console.log("WOULD CREATE PLAYABLE CHARACTER", {characterName, cell});
-                            this.createPlayableCharacter(characterName, cell); // cell.x, cell.y);
-                        } else {
-                            console.warn("CELL has sprite with no kind or character", { cell, itemKindBySpriteId, characterById });
-                        }
-                        return;
-                    } // hm
-                    this.itemKinds[kind.name] = kind;
+            if (cell.sprites.length > 0) {
+                for (let spIndex = 1; spIndex < cell.sprites.length; spIndex++) {
+                    this.processTileSprite(cell, spIndex, cellIndex);
+                }
 
-                    // we could get the image and attach it to an actor
-                    const collision = spriteCollisionById[spriteId]; //cell.sprites[1].spriteId];
-                    //cell.removeSprite(cell.sprites[1]);
-
-                    let sheet: ex.SpriteSheet = (<any>this.tileMap)._spriteSheets[spriteSheetKey];
-                    // let xOff = 16, yOff = 16;
-                    let size = kind.size || 1;
-                    //let cellsToMark = [];
-                    if (size > 1) {
-                        // xOff = 16 * size; yOff = 16 * size;
-                        for (const x of Array(size).keys()) {
-                            for (const y of Array(size).keys()) {
-                                let cx = x, cy = y;
-                                let cellToRemove = this.tileMap.getCellByIndex(index + cx + (cy * this.tileMap.cols));
-                                if (cellToRemove.sprites[1]) {
-                                    //console.log("REMOVE SPRITE FROM", {x,y,cellToRemove});
-                                    cellToRemove.removeSprite(cellToRemove.sprites[1]);
-                                    //cellsToMark.push(cellToRemove);
-                                } else {
-                                    // console.warn("NO SPRITE TO REMOVE FROM", { x, y, size });
-                                }
-                            }
-                        }
-                    }
-
-                    // let z: number = (kind && kind.z) || 0;
-                    kind.collision = collision;
-                    let newSprite: ex.Sprite = sheet.getSprite(spriteId)
-                    kind.drawing = newSprite; 
-
-                    // let thing: Thing = 
-                    this.spawn(kind, cell);
+                for (let spIndex = 1; spIndex < cell.sprites.length; spIndex++) {
+                    cell.removeSprite(cell.sprites[spIndex]);
                 }
             }
         });
+    }
 
-        // console.log({ itemKinds: this.itemKinds });
+    processTileSprite(cell: ex.Cell, spriteIndex: number, cellIndex: number) {
+        let theSprite = cell.sprites[spriteIndex];
+
+        let { spriteSheetKey, spriteId } = theSprite;
+        const kind: ItemKind = this.itemKindBySpriteId[spriteId];
+
+        if (!kind) {
+            const characterName: string = this.characterById[spriteId];
+            if (characterName) {
+                console.log("WOULD CREATE PLAYABLE CHARACTER", { characterName, cell });
+                this.createPlayableCharacter(characterName, cell);
+            } else {
+                console.warn("CELL has sprite with no kind or character", { cell, items: this.itemKindBySpriteId, characters: this.characterById });
+            }
+            return;
+        } // hm
+
+        this.itemKinds[kind.name] = kind;
+
+        let size = kind.size || 1;
+        let width = kind.width || kind.size;
+        if (size > 1) {
+            console.log("clear space for object", { size, width })
+            for (const x of Array(width).keys()) {
+                for (const y of Array(size).keys()) {
+                    let cx = x, cy = y;
+                    let cellToRemove = this.tileMap.getCellByIndex(cellIndex + cx + (cy * this.tileMap.cols));
+
+                    for (let spIndex = 1; spIndex < cellToRemove.sprites.length; spIndex++) {
+                        // we basically want to remove all sprites anyway right??
+                        cellToRemove.removeSprite(cellToRemove.sprites[spIndex]);
+                    }
+                    //if (cellToRemove.sprites[1]) {
+                    //    let otherSpriteId = cellToRemove.sprites[1].spriteId;
+                    //    let otherKind = this.itemKindBySpriteId[otherSpriteId];
+                    //    // hmm -- could check if it's even the same kind of thing...?
+                    //    if (otherKind === kind) {
+
+                    //        cellToRemove.removeSprite(cellToRemove.sprites[1]);
+                    //    }
+                    //} else {
+                    //}
+                }
+            }
+        }
+
+        // we could get the image and attach it to an actor
+        const collision = this.spriteCollisionById[spriteId];
+        kind.collision = collision;
+
+        let sheet: ex.SpriteSheet = (<any>this.tileMap)._spriteSheets[spriteSheetKey];
+        let newSprite: ex.Sprite = sheet.getSprite(spriteId)
+        kind.drawing = newSprite;
+
+        this.spawn(kind, cell);
     }
 
 }
