@@ -30,12 +30,14 @@ export class Player extends ex.Actor {
     engine: ex.Engine,
   ) {
 
-    super(x, y, 32, 64); //64);
+    super(x, y, 48, 64); //64);
+    // this.setHeight(16);
     //this.c
     // this.anchor = new ex.Vector(0,48);
-    // this.anchor = new ex.Vector(0,8);
+    // this.anchor = new ex.Vector(0,0.125);
+    // this
 
-    this.collisionArea.body.useCircleCollision(6, new ex.Vector(0, 26));
+    this.collisionArea.body.useCircleCollision(6, new ex.Vector(0, -4));
     //this.collisionArea.pos
     this.color = new ex.Color(255, 255, 255);
 
@@ -120,7 +122,7 @@ export class Player extends ex.Actor {
 
   interactionPos(): { x:number, y:number }  {
     let interactionPos = this.getCenter().clone();
-    let yOff = 20;
+    let yOff = 0;
     if (this.facing === 'up') { yOff -= 2; }
     if (this.facing === 'down') { yOff -= 4; }
     interactionPos.y += yOff; //this.getHeight();
@@ -139,6 +141,7 @@ export class Player extends ex.Actor {
 
   equipmentPos(): { x: number, y: number } {
     let equipmentPos = this.getCenter().clone();
+    equipmentPos.y -= 32;
     if (this.facing === 'left') {
       //equipmentPos.x -= 6;
       equipmentPos.y += 6;
@@ -149,9 +152,18 @@ export class Player extends ex.Actor {
     return equipmentPos;
   }
 
+  drawSelf(ctx: CanvasRenderingContext2D) {
+    let x = this.pos.x - 16;
+    let y = this.pos.y - 56; //64; //+ 32;
+      // super.draw(ctx, delta);
+    this.currentDrawing.draw(ctx, x, y); // this.pos.x, this.pos.y);
+  }
+
   draw(ctx: CanvasRenderingContext2D, delta: number) { //engine) {
     if (!(this.facing === 'up')) {
-      super.draw(ctx, delta);
+      this.drawSelf(ctx);
+      // this.currentDrawing.draw(ctx, this.pos.x, this.pos.y);
+      // super.draw(ctx, delta);
     }
 
     if (this.usingItem && this.equipped && this.equipSprite) {
@@ -174,24 +186,27 @@ export class Player extends ex.Actor {
     }
 
     if ((this.facing === 'up')) {
-      super.draw(ctx, delta);
+      this.drawSelf(ctx);
+      // super.draw(ctx, delta);
     }
 
+    // this.body.debugDraw(ctx); //, ex.Color.Azure);
     if (this.config.debugBoundingBoxes) {
+      // this.debugDraw(ctx);
       this.collisionArea.debugDraw(ctx, ex.Color.Chartreuse);
-      if (this.interacting) {
-        let pos = this.interactionPos();
-        ctx.fillRect(pos.x, pos.y - 10, 4, 4);
-        ctx.fillRect(pos.x, pos.y, 4, 4);
-        ctx.fillRect(pos.x, pos.y + 10, 4, 4);
-        ctx.fillRect(pos.x - 10, pos.y, 4, 4);
-        ctx.fillRect(pos.x + 10, pos.y, 4, 4);
-      }
-      ctx.fillRect(this.x, this.computeZ(), 3, 3);
+      // if (this.interacting) {
+      // let pos = this.interactionPos();
+      // ctx.fillRect(pos.x, pos.y - 10, 4, 4);
+      // ctx.fillRect(pos.x, pos.y, 4, 4);
+      // ctx.fillRect(pos.x, pos.y + 10, 4, 4);
+      // ctx.fillRect(pos.x - 10, pos.y, 4, 4);
+      // ctx.fillRect(pos.x + 10, pos.y, 4, 4);
+      // }
+      // ctx.fillRect(this.x, this.computeZ(), 3, 3);
     }
   }
 
-  computeZ = () => (this.y + 24); // / 10000; //8;
+  computeZ = () => (this.y); // + 24); // / 10000; //8;
 
   halt = () => {
     this.vel = new ex.Vector(0, 0);

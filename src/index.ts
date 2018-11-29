@@ -23,8 +23,8 @@ scratch, recreating, beginning anew. (gd)
 const config: GameConfig = {
   debugCells: false,
   debugBoundingBoxes: false,
-  zoom: 3,
-  playerSpeed: 4.7, // 5.8, //.4,
+  zoom: 2,
+  playerSpeed: 9.6, // 4.8, // 5.8, //.4,
   bgMusic: true
 }
 

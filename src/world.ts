@@ -182,25 +182,9 @@ class World {
         for (const x of Array(width).keys()) {
             for (const y of Array(size).keys()) {
                 let cellToMark = this.tileMap.getCellByIndex(cell.index + x + (y * this.tileMap.cols));
-                // todo remove item from list...
                 if (cellToMark['__isle_items'].find(item => it === item)) { // ==.kind === kind) {
                     cellToMark['__isle_items'] = cellToMark['__isle_items'].filter(item => it !== item);
                 }
-                //cellToMark.clearSprites();
-                // }; // = null;
-
-                //if (cellToMark.sprites.length > 1) {
-                //    // console.l
-                //    for (let otherSprite of cellToMark.sprites) {
-                //        let otherSpriteId = otherSprite.spriteId;
-                //        let otherKind = this.itemKindBySpriteId[otherSpriteId];
-
-                //        // hmm -- could check if it's even the same kind of thing...?
-                //        if (otherKind === kind) {
-                //            cellToMark.removeSprite(otherSprite);//cellToMark.sprites[1]);
-                //        }
-                //    }
-                //}
             }
         }
 
@@ -414,6 +398,7 @@ class World {
 
                     for (let spIndex = 1; spIndex < cellToRemove.sprites.length; spIndex++) {
                         // we basically want to remove all sprites anyway right??
+                        // (this seems way too drastic, i'm not sure how it's working)
                         cellToRemove.removeSprite(cellToRemove.sprites[spIndex]);
                     }
                     //if (cellToRemove.sprites[1]) {

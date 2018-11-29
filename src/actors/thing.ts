@@ -11,7 +11,7 @@ export class Thing extends ex.Actor {
         public layer: number = 0,
         public debugBoxes: boolean,
     ) {
-        super(x, y, 32 * width, 32 * height, ex.Color.Chartreuse);
+        super(x, y, 30 * width, 32 * height, ex.Color.Chartreuse);
     }
 
     draw(ctx, engine) {
